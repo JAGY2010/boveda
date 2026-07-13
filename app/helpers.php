@@ -29,6 +29,12 @@ if (! function_exists('local')) {
             return \App\Models\Negocio::find($sel);
         }
 
+        // El admin no entra a ningún local por defecto: gestiona desde el panel
+        // y solo "entra" a un local cuando lo selecciona explícitamente.
+        if ($u->isAdmin()) {
+            return null;
+        }
+
         $default = ($u->negocio_id && in_array((int) $u->negocio_id, $ids, true)) ? (int) $u->negocio_id : $ids[0];
 
         return \App\Models\Negocio::find($default);

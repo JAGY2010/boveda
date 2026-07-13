@@ -8,6 +8,7 @@ use App\Http\Controllers\ConsolidadoController;
 use App\Http\Controllers\ContabilidadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmpenoController;
+use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LocalController;
 use App\Http\Middleware\CompartirLocales;
@@ -19,6 +20,7 @@ Route::middleware(['auth', 'verified', CompartirLocales::class])->group(function
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::post('local/cambiar', [LocalController::class, 'cambiar'])->name('local.cambiar');
+    Route::post('local/salir', [LocalController::class, 'salir'])->name('local.salir');
     Route::get('consolidado', [ConsolidadoController::class, 'index'])->name('consolidado');
 
     Route::get('clientes', [ClienteController::class, 'index'])->name('clientes.index');
@@ -44,6 +46,11 @@ Route::middleware(['auth', 'verified', CompartirLocales::class])->group(function
 
     Route::get('configuracion', [ConfiguracionController::class, 'edit'])->name('config.edit');
     Route::put('configuracion', [ConfiguracionController::class, 'update'])->name('config.update');
+
+    // El dueño gestiona los empleados de su local
+    Route::get('equipo', [EquipoController::class, 'index'])->name('equipo.index');
+    Route::get('equipo/nuevo', [EquipoController::class, 'create'])->name('equipo.create');
+    Route::post('equipo', [EquipoController::class, 'store'])->name('equipo.store');
 
     // Panel de administración (solo admin)
     Route::prefix('admin')->name('admin.')->group(function () {

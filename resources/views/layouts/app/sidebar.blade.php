@@ -28,35 +28,47 @@
                         <div class="truncate text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ $localActual->nombre }}</div>
                     @endif
                 </div>
-            @endisset
 
-            <flux:sidebar.nav>
-                <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                    {{ __('Tablero') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="users" :href="route('clientes.index')" :current="request()->routeIs('clientes.*')" wire:navigate>
-                    {{ __('Clientes') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="banknotes" :href="route('empenos.index')" :current="request()->routeIs('empenos.*')" wire:navigate>
-                    {{ __('Empeños') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="shopping-bag" :href="route('inventario.index')" :current="request()->routeIs('inventario.*')" wire:navigate>
-                    {{ __('Ventas e inventario') }}
-                </flux:sidebar.item>
-                @if (auth()->user()->puedeVerDinero())
-                    <flux:sidebar.item icon="chart-pie" :href="route('contabilidad.index')" :current="request()->routeIs('contabilidad.*')" wire:navigate>
-                        {{ __('Contabilidad') }}
+                <flux:sidebar.nav>
+                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                        {{ __('Tablero') }}
                     </flux:sidebar.item>
-                @endif
-                @if (auth()->user()->hasMultipleLocales())
-                    <flux:sidebar.item icon="chart-bar" :href="route('consolidado')" :current="request()->routeIs('consolidado')" wire:navigate>
-                        {{ __('Consolidado') }}
+                    <flux:sidebar.item icon="users" :href="route('clientes.index')" :current="request()->routeIs('clientes.*')" wire:navigate>
+                        {{ __('Clientes') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="banknotes" :href="route('empenos.index')" :current="request()->routeIs('empenos.*')" wire:navigate>
+                        {{ __('Empeños') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="shopping-bag" :href="route('inventario.index')" :current="request()->routeIs('inventario.*')" wire:navigate>
+                        {{ __('Ventas e inventario') }}
+                    </flux:sidebar.item>
+                    @if (auth()->user()->puedeVerDinero())
+                        <flux:sidebar.item icon="chart-pie" :href="route('contabilidad.index')" :current="request()->routeIs('contabilidad.*')" wire:navigate>
+                            {{ __('Contabilidad') }}
+                        </flux:sidebar.item>
+                    @endif
+                    @if (auth()->user()->hasMultipleLocales())
+                        <flux:sidebar.item icon="chart-bar" :href="route('consolidado')" :current="request()->routeIs('consolidado')" wire:navigate>
+                            {{ __('Consolidado') }}
+                        </flux:sidebar.item>
+                    @endif
+                    @if (auth()->user()->puedeEditar())
+                        <flux:sidebar.item icon="user-plus" :href="route('equipo.index')" :current="request()->routeIs('equipo.*')" wire:navigate>
+                            {{ __('Empleados') }}
+                        </flux:sidebar.item>
+                    @endif
+                    <flux:sidebar.item icon="cog-6-tooth" :href="route('config.edit')" :current="request()->routeIs('config.*')" wire:navigate>
+                        {{ __('Configuración') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.nav>
+
+                @if (auth()->user()->isAdmin())
+                    <form method="POST" action="{{ route('local.salir') }}" class="px-3 pt-1">
+                        @csrf
+                        <button type="submit" class="w-full rounded-lg px-2 py-1.5 text-left text-sm text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800">← Salir del local</button>
+                    </form>
                 @endif
-                <flux:sidebar.item icon="cog-6-tooth" :href="route('config.edit')" :current="request()->routeIs('config.*')" wire:navigate>
-                    {{ __('Configuración') }}
-                </flux:sidebar.item>
-            </flux:sidebar.nav>
+            @endisset
 
             @if (auth()->user()->isAdmin())
                 <flux:sidebar.nav>

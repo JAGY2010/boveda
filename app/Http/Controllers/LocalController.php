@@ -17,4 +17,12 @@ class LocalController
 
         return redirect()->route('dashboard');
     }
+
+    /** Salir del local activo (el admin vuelve al panel). */
+    public function salir()
+    {
+        session()->forget('local_id');
+
+        return redirect()->route('admin.locales.index');
+    }
 }

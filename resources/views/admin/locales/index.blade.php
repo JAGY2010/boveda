@@ -22,6 +22,7 @@
                         <th class="px-4 py-3 text-right font-semibold">Clientes</th>
                         <th class="px-4 py-3 text-right font-semibold">Empeños</th>
                         <th class="px-4 py-3 text-right font-semibold">Caja</th>
+                        <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -35,6 +36,13 @@
                             <td class="px-4 py-3 text-right tabular-nums">{{ $l->clientes_count }}</td>
                             <td class="px-4 py-3 text-right tabular-nums">{{ $l->empenos_count }}</td>
                             <td class="px-4 py-3 text-right tabular-nums">{{ cop($l->caja) }}</td>
+                            <td class="px-4 py-3 text-right">
+                                <form method="POST" action="{{ route('local.cambiar') }}">
+                                    @csrf
+                                    <input type="hidden" name="local_id" value="{{ $l->id }}">
+                                    <button type="submit" class="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">Entrar →</button>
+                                </form>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
