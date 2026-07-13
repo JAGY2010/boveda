@@ -34,10 +34,11 @@
             </div>
             <div>
                 <label class="mb-2 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Locales que puede ver</label>
+                @php($preseleccion = collect(old('locales', request('local') ? [request('local')] : []))->map(fn ($v) => (int) $v))
                 <div class="grid gap-2 sm:grid-cols-2">
                     @foreach ($locales as $l)
                         <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700">
-                            <input type="checkbox" name="locales[]" value="{{ $l->id }}" class="rounded" />
+                            <input type="checkbox" name="locales[]" value="{{ $l->id }}" @checked($preseleccion->contains($l->id)) class="rounded" />
                             <span>{{ $l->nombre }} <span class="text-zinc-400">· {{ $l->ciudad }}</span></span>
                         </label>
                     @endforeach

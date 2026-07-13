@@ -11,17 +11,22 @@ use App\Http\Controllers\EmpenoController;
 use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LocalController;
+use App\Http\Controllers\SuscripcionController;
 use App\Http\Middleware\CompartirLocales;
+use App\Http\Middleware\VerificarSuscripcion;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
 
-Route::middleware(['auth', 'verified', CompartirLocales::class])->group(function () {
+Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscripcion::class])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::post('local/cambiar', [LocalController::class, 'cambiar'])->name('local.cambiar');
     Route::post('local/salir', [LocalController::class, 'salir'])->name('local.salir');
     Route::get('consolidado', [ConsolidadoController::class, 'index'])->name('consolidado');
+
+    // Pantalla que ve el dueño/empleado cuando el local está vencido o suspendido.
+    Route::get('suscripcion/bloqueada', [SuscripcionController::class, 'bloqueada'])->name('suscripcion.bloqueada');
 
     Route::get('clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('clientes/nuevo', [ClienteController::class, 'create'])->name('clientes.create');
@@ -57,10 +62,15 @@ Route::middleware(['auth', 'verified', CompartirLocales::class])->group(function
         Route::get('locales', [AdminLocalController::class, 'index'])->name('locales.index');
         Route::get('locales/nuevo', [AdminLocalController::class, 'create'])->name('locales.create');
         Route::post('locales', [AdminLocalController::class, 'store'])->name('locales.store');
+        Route::get('locales/{negocio}', [AdminLocalController::class, 'show'])->name('locales.show');
+        Route::post('locales/{negocio}/renovar', [AdminLocalController::class, 'renovar'])->name('locales.renovar');
+        Route::post('locales/{negocio}/suspender', [AdminLocalController::class, 'suspender'])->name('locales.suspender');
+        Route::post('locales/{negocio}/reactivar', [AdminLocalController::class, 'reactivar'])->name('locales.reactivar');
 
         Route::get('usuarios', [AdminUsuarioController::class, 'index'])->name('usuarios.index');
         Route::get('usuarios/nuevo', [AdminUsuarioController::class, 'create'])->name('usuarios.create');
         Route::post('usuarios', [AdminUsuarioController::class, 'store'])->name('usuarios.store');
+        Route::post('usuarios/{usuario}/password', [AdminUsuarioController::class, 'resetPassword'])->name('usuarios.password');
     });
 });
 

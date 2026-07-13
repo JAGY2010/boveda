@@ -13,12 +13,41 @@ class UsuarioController
         abort_unless(auth()->user()->isAdmin(), 403);
     }
 
-    public function index()
+    public function index(Request $r)
     {
         $this->guard();
-        $usuarios = User::with('negocios')->orderBy('name')->get();
 
-        return view('admin.usuarios.index', compact('usuarios'));
+        $q = trim((string) $r->query('q', ''));
+        $role = $r->query('role');
+        $localId = $r->query('local');
+
+        $usuarios = User::with('negocios')
+            ->when($q !== '', fn ($query) => $query->where(
+                fn ($w) => $w->where('name', 'like', "%{$q}%")->orWhere('email', 'like', "%{$q}%")
+            ))
+            ->when(in_array($role, ['owner', 'employee', 'admin'], true), fn ($query) => $query->where('role', $role))
+            ->when($localId, fn ($query) => $query->whereHas('negocios', fn ($n) => $n->where('negocios.id', $localId)))
+            ->orderBy('name')
+            ->paginate(50)
+            ->withQueryString();
+
+        $locales = Negocio::orderBy('nombre')->get();
+
+        return view('admin.usuarios.index', compact('usuarios', 'locales', 'q', 'role', 'localId'));
+    }
+
+    /** El admin restablece (coloca una nueva) contraseña de cualquier usuario. */
+    public function resetPassword(Request $r, User $usuario)
+    {
+        $this->guard();
+
+        $data = $r->validate([
+            'password' => 'required|string|min:6',
+        ]);
+
+        $usuario->update(['password' => $data['password']]); // el cast 'hashed' lo encripta
+
+        return back()->with('ok', 'Contraseña de '.$usuario->name.' actualizada.');
     }
 
     public function create()

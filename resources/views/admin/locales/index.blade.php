@@ -14,39 +14,46 @@
         </div>
 
         <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <table class="w-full min-w-[560px] text-sm">
+            <table class="w-full min-w-[720px] text-sm">
                 <thead>
                     <tr class="border-b border-zinc-100 text-left text-xs uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
                         <th class="px-4 py-3 font-semibold">Local</th>
-                        <th class="px-4 py-3 font-semibold">NIT</th>
+                        <th class="px-4 py-3 font-semibold">Usuarios</th>
                         <th class="px-4 py-3 text-right font-semibold">Clientes</th>
                         <th class="px-4 py-3 text-right font-semibold">Empeños</th>
-                        <th class="px-4 py-3 text-right font-semibold">Caja</th>
+                        <th class="px-4 py-3 font-semibold">Suscripción</th>
                         <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @foreach ($locales as $l)
-                        <tr>
+                        <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
                             <td class="px-4 py-3">
-                                <div class="font-semibold text-zinc-900 dark:text-white">{{ $l->nombre }}</div>
+                                <a href="{{ route('admin.locales.show', $l) }}" wire:navigate class="font-semibold text-zinc-900 hover:text-emerald-600 dark:text-white">{{ $l->nombre }}</a>
                                 <div class="text-xs text-zinc-400">{{ $l->ciudad }}</div>
                             </td>
-                            <td class="px-4 py-3 text-zinc-500">{{ $l->nit }}</td>
+                            <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                                {{ $l->usuarios_count }}
+                                <span class="text-xs text-zinc-400">· {{ $l->duenos_count }}D · {{ $l->empleados_count }}E</span>
+                            </td>
                             <td class="px-4 py-3 text-right tabular-nums">{{ $l->clientes_count }}</td>
                             <td class="px-4 py-3 text-right tabular-nums">{{ $l->empenos_count }}</td>
-                            <td class="px-4 py-3 text-right tabular-nums">{{ cop($l->caja) }}</td>
-                            <td class="px-4 py-3 text-right">
-                                <form method="POST" action="{{ route('local.cambiar') }}">
-                                    @csrf
-                                    <input type="hidden" name="local_id" value="{{ $l->id }}">
-                                    <button type="submit" class="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">Entrar →</button>
-                                </form>
+                            <td class="px-4 py-3"><x-suscripcion-badge :negocio="$l" /></td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('admin.locales.show', $l) }}" wire:navigate class="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">Gestionar</a>
+                                    <form method="POST" action="{{ route('local.cambiar') }}">
+                                        @csrf
+                                        <input type="hidden" name="local_id" value="{{ $l->id }}">
+                                        <button type="submit" class="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">Entrar →</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
+        <p class="mt-3 text-xs text-zinc-400">D = dueños · E = empleados. Entra a un local para ver sus usuarios y su suscripción.</p>
     </div>
 </x-layouts::app>

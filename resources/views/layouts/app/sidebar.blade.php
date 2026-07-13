@@ -143,6 +143,14 @@
             </flux:dropdown>
         </flux:header>
 
+        @if (! empty($localActual) && $localActual->suscripcionPorVencer())
+            <div class="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
+                @php($d = $localActual->diasParaVencer())
+                Tu suscripción vence {{ $d === 0 ? 'hoy' : ($d === 1 ? 'mañana' : 'en '.$d.' días') }}
+                ({{ $localActual->suscripcion_hasta->format('d/m/Y') }}). Renueva con el administrador para no perder el acceso.
+            </div>
+        @endif
+
         {{ $slot }}
 
         @persist('toast')

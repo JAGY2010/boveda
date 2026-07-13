@@ -7,6 +7,7 @@ use App\Models\Negocio;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class SmokeTest extends TestCase
@@ -217,6 +218,80 @@ class SmokeTest extends TestCase
         $this->assertEquals(0, (int) $e->saldo);
         $this->assertEquals($cajaAntes + $recibido, (int) $n->caja);
         $this->assertEquals($prestadoAntes - $saldo, (int) $n->prestado);
+    }
+
+    public function test_suscripcion_vencida_bloquea_operacion(): void
+    {
+        $dueno = $this->owner();
+        $empleado = User::where('email', 'empleado@boveda.test')->firstOrFail();
+        $admin = User::where('email', 'admin@boveda.test')->firstOrFail();
+
+        // Vencer todos los locales del dueño (ayer) -> queda bloqueado sin importar el activo.
+        Negocio::whereIn('id', $dueno->accessibleNegocioIds())
+            ->update(['suscripcion_hasta' => now()->subDay()->toDateString()]);
+
+        $this->actingAs($dueno)->get('/dashboard')->assertRedirect(route('suscripcion.bloqueada'));
+        $this->actingAs($dueno)->get(route('suscripcion.bloqueada'))->assertOk();
+        $this->actingAs($empleado)->get('/empenos')->assertRedirect(route('suscripcion.bloqueada'));
+
+        // El admin NO se bloquea aunque entre a un local vencido.
+        $localVencido = Negocio::whereIn('id', $dueno->accessibleNegocioIds())->first();
+        $this->actingAs($admin)->withSession(['local_id' => $localVencido->id])->get('/dashboard')->assertOk();
+    }
+
+    public function test_admin_renueva_suspende_reactiva(): void
+    {
+        $admin = $this->admin();
+        $local = Negocio::query()->first();
+        $local->update(['suscripcion_hasta' => now()->subDay()->toDateString(), 'suspendido' => false]);
+
+        // Renovar 2 meses (estaba vencido -> cuenta desde hoy) -> activa y futuro.
+        $this->actingAs($admin)->post(route('admin.locales.renovar', $local), ['meses' => 2])->assertRedirect();
+        $local->refresh();
+        $this->assertTrue($local->suscripcion_hasta->isFuture());
+        $this->assertEquals('activa', $local->estadoSuscripcion());
+
+        // Suspender -> bloqueada; Reactivar -> deja de estarlo.
+        $this->actingAs($admin)->post(route('admin.locales.suspender', $local))->assertRedirect();
+        $this->assertTrue($local->refresh()->suscripcionBloqueada());
+        $this->actingAs($admin)->post(route('admin.locales.reactivar', $local))->assertRedirect();
+        $this->assertFalse($local->refresh()->suspendido);
+    }
+
+    public function test_admin_restablece_contrasena(): void
+    {
+        $admin = $this->admin();
+        $empleado = User::where('email', 'empleado@boveda.test')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('admin.usuarios.password', $empleado), ['password' => 'nuevaclave123'])
+            ->assertRedirect();
+
+        $this->assertTrue(Hash::check('nuevaclave123', $empleado->fresh()->password));
+    }
+
+    public function test_directorio_y_detalle_de_local(): void
+    {
+        $admin = $this->admin();
+        $local = Negocio::query()->first();
+
+        $this->actingAs($admin)->get(route('admin.locales.show', $local))->assertOk();
+        $this->actingAs($admin)->get(route('admin.usuarios.index', ['q' => 'dueno', 'role' => 'owner']))->assertOk();
+        $this->actingAs($admin)->get(route('admin.usuarios.create', ['local' => $local->id]))->assertOk();
+    }
+
+    public function test_local_nuevo_trae_prueba_activa(): void
+    {
+        $this->actingAs($this->admin());
+
+        $this->post('/admin/locales', [
+            'nombre' => 'Prueba Suscripcion', 'ciudad' => 'X', 'plazo_default' => 4,
+            'pct_default' => 20, 'ltv_default' => 50, 'caja_inicial' => 0, 'consecutivo_inicial' => 1,
+        ])->assertRedirect('/admin/locales');
+
+        $n = Negocio::where('nombre', 'Prueba Suscripcion')->firstOrFail();
+        $this->assertNotNull($n->suscripcion_hasta);
+        $this->assertEquals('activa', $n->estadoSuscripcion());
     }
 
     public function test_admin_sin_locales_va_al_panel(): void
