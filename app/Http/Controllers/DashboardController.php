@@ -8,6 +8,13 @@ class DashboardController
     {
         $negocio = local();
 
+        // Sin local asignado: el admin va a crear el primero; a los demás se les avisa.
+        if (! $negocio) {
+            return auth()->user()->isAdmin()
+                ? redirect()->route('admin.locales.index')
+                : abort(403, 'Aún no tienes un local asignado. Pídele al administrador que te asigne uno.');
+        }
+
         $activos = $negocio->empenos()->with('cliente')->where('estado', 'activo')->get();
 
         $proximos = $activos->sortBy(fn ($e) => $e->vencimiento()->timestamp)->take(8)->values();

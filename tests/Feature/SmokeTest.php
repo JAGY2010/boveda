@@ -131,4 +131,12 @@ class SmokeTest extends TestCase
 
         $this->assertDatabaseHas('negocios', ['nombre' => 'La Playita Editada', 'nit' => '999-9', 'representante' => 'Nuevo Rep']);
     }
+
+    public function test_admin_sin_locales_va_al_panel(): void
+    {
+        // Producción recién desplegada: hay admin pero aún no hay locales.
+        $admin = User::factory()->create(['role' => 'admin', 'negocio_id' => null]);
+
+        $this->actingAs($admin)->get('/dashboard')->assertRedirect(route('admin.locales.index'));
+    }
 }
