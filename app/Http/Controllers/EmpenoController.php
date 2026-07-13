@@ -1,0 +1,153 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Empeno;
+use App\Support\Ledger;
+use Illuminate\Http\Request;
+
+class EmpenoController
+{
+    public function index(Request $r)
+    {
+        $negocio = local();
+        $q = trim((string) $r->query('q', ''));
+
+        $empenos = $negocio->empenos()
+            ->with('cliente')
+            ->orderByDesc('id')
+            ->when($q !== '', function ($query) use ($q) {
+                $dq = preg_replace('/\D/', '', $q);
+                $query->where(function ($w) use ($q, $dq) {
+                    $w->whereHas('cliente', function ($c) use ($q, $dq) {
+                        $c->where('nombre', 'like', "%{$q}%");
+                        if ($dq !== '') {
+                            $c->orWhereRaw("REPLACE(REPLACE(cedula,'.',''),' ','') LIKE ?", ["%{$dq}%"]);
+                        }
+                    })->orWhere('articulo', 'like', "%{$q}%");
+                });
+            })
+            ->get();
+
+        return view('empenos.index', compact('empenos', 'q'));
+    }
+
+    public function create()
+    {
+        $negocio = local();
+        $clientes = $negocio->clientes()->orderBy('nombre')->get();
+
+        return view('empenos.create', compact('negocio', 'clientes'));
+    }
+
+    public function store(Request $r)
+    {
+        $negocio = local();
+
+        $data = $r->validate([
+            'cliente_id' => 'nullable|integer',
+            'nuevo_nombre' => 'nullable|string|max:255',
+            'nuevo_cedula' => 'nullable|string|max:50',
+            'nuevo_tel' => 'nullable|string|max:50',
+            'nuevo_direccion' => 'nullable|string|max:255',
+            'categoria' => 'required|string|max:50',
+            'articulo' => 'nullable|string|max:255',
+            'serial' => 'nullable|string|max:255',
+            'principal' => 'required|integer|min:1',
+            'pct' => 'required|numeric|min:0',
+            'plazo' => 'required|integer|min:1',
+            'atributos' => 'nullable|array',
+        ]);
+
+        if ($r->filled('nuevo_nombre')) {
+            $cliente = $negocio->clientes()->create([
+                'nombre' => $r->nuevo_nombre,
+                'cedula' => $r->nuevo_cedula,
+                'tel' => $r->nuevo_tel,
+                'direccion' => $r->nuevo_direccion,
+            ]);
+            $clienteId = $cliente->id;
+        } else {
+            $clienteId = (int) $r->cliente_id;
+            if (! $negocio->clientes()->whereKey($clienteId)->exists()) {
+                return back()->withInput()->with('error', 'Elige un cliente o crea uno nuevo.');
+            }
+        }
+
+        if ((int) $data['principal'] > $negocio->caja) {
+            return back()->withInput()->with('error', 'No hay suficiente en caja ('.cop($negocio->caja).').');
+        }
+
+        $atributos = array_filter($data['atributos'] ?? [], fn ($v) => $v !== null && $v !== '');
+        $articulo = ($data['articulo'] ?? null) ?: trim($data['categoria'].' '.implode(' ', $atributos));
+
+        $empeno = Ledger::crearEmpeno($negocio, $clienteId, [
+            'articulo' => $articulo,
+            'categoria' => $data['categoria'],
+            'atributos' => $atributos,
+            'serial' => $data['serial'] ?? null,
+            'principal' => (int) $data['principal'],
+            'pct' => $data['pct'],
+            'plazo' => (int) $data['plazo'],
+        ]);
+
+        return redirect()->route('empenos.show', $empeno)->with('ok', 'Empeño registrado');
+    }
+
+    public function show(Empeno $empeno)
+    {
+        $this->guard($empeno);
+        $empeno->load('cliente', 'pagos');
+
+        return view('empenos.show', compact('empeno'));
+    }
+
+    public function pago(Request $r, Empeno $empeno)
+    {
+        $this->guard($empeno);
+        abort_if($empeno->estado !== 'activo', 422);
+
+        $abono = (int) $r->input('abono', 0);
+        if ($abono > 0) {
+            Ledger::abonar($empeno, $abono);
+        } else {
+            Ledger::pagarInteres($empeno);
+        }
+
+        $empeno->refresh();
+
+        return redirect()->route('empenos.show', $empeno)
+            ->with('ok', 'Pago registrado · nuevo vencimiento '.$empeno->vencimiento()->format('d/m/Y'));
+    }
+
+    public function retirar(Empeno $empeno)
+    {
+        $this->guard($empeno);
+        abort_if($empeno->estado !== 'activo', 422);
+        Ledger::retirar($empeno);
+
+        return redirect()->route('empenos.index')->with('ok', 'Artículo entregado · el capital volvió a caja');
+    }
+
+    public function perder(Empeno $empeno)
+    {
+        $this->guard($empeno);
+        abort_if($empeno->estado !== 'activo', 422);
+        Ledger::pasarAInventario($empeno);
+
+        return redirect()->route('inventario.index')->with('ok', 'El artículo pasó a inventario para vender');
+    }
+
+    public function contrato(Empeno $empeno)
+    {
+        $this->guard($empeno);
+        $empeno->load('cliente', 'negocio');
+
+        return view('empenos.contrato', compact('empeno'));
+    }
+
+    private function guard(Empeno $empeno): void
+    {
+        abort_if(! in_array($empeno->negocio_id, auth()->user()->accessibleNegocioIds()), 403);
+    }
+}
