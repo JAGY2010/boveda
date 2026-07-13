@@ -52,15 +52,19 @@ class Empeno extends Model
         return $this->inicio->copy()->addMonthsNoOverflow($this->meses_pagados);
     }
 
-    /** Interés corrido (prorrateado por día) desde la última cuota cubierta. */
+    /** Interés corrido por CUARTOS de mes desde la última cuota cubierta (cada cuarto = 1/4 del interés mensual). */
     public function interesCorrido(): int
     {
-        $dias = $this->cubiertoHasta()->diffInDays(now(), false);
+        // Días completos transcurridos (el mismo día no cobra nada).
+        $dias = (int) $this->cubiertoHasta()->startOfDay()->diffInDays(now()->startOfDay(), false);
         if ($dias <= 0) {
             return 0;
         }
 
-        return (int) round($this->saldo * ($this->pct / 100) * ($dias / 30));
+        // El mes se divide en 4 cuartos (7.5 días c/u); se cobra por cuarto o fracción.
+        $cuartos = (int) ceil($dias / 7.5);
+
+        return (int) round($this->interesMes() * $cuartos / 4);
     }
 
     /** Cuánto debe hoy para retirar = saldo + interés corrido. */

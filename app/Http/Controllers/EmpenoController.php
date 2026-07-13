@@ -108,10 +108,12 @@ class EmpenoController
         abort_if($empeno->estado !== 'activo', 422);
 
         $abono = (int) $r->input('abono', 0);
+        $interesRecibido = $r->filled('interes_recibido') ? (int) $r->input('interes_recibido') : null;
+
         if ($abono > 0) {
-            Ledger::abonar($empeno, $abono);
+            Ledger::abonar($empeno, $abono, $interesRecibido);
         } else {
-            Ledger::pagarInteres($empeno);
+            Ledger::pagarInteres($empeno, $interesRecibido);
         }
 
         $empeno->refresh();
@@ -120,11 +122,13 @@ class EmpenoController
             ->with('ok', 'Pago registrado · nuevo vencimiento '.$empeno->vencimiento()->format('d/m/Y'));
     }
 
-    public function retirar(Empeno $empeno)
+    public function retirar(Request $r, Empeno $empeno)
     {
         $this->guard($empeno);
         abort_if($empeno->estado !== 'activo', 422);
-        Ledger::retirar($empeno);
+
+        $valorRecibido = $r->filled('valor_recibido') ? (int) $r->input('valor_recibido') : null;
+        Ledger::retirar($empeno, $valorRecibido);
 
         return redirect()->route('empenos.index')->with('ok', 'Artículo entregado · el capital volvió a caja');
     }

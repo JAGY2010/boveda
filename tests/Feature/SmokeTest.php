@@ -162,6 +162,63 @@ class SmokeTest extends TestCase
         $this->assertDatabaseHas('negocios', ['nombre' => 'La Playita Editada', 'nit' => '999-9', 'representante' => 'Nuevo Rep']);
     }
 
+    public function test_interes_corrido_por_cuartos(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $e = Empeno::where('estado', 'activo')->firstOrFail();
+        $e->update(['saldo' => 1000000, 'pct' => 8, 'meses_pagados' => 0]);
+        $e->refresh();
+
+        $this->assertEquals(80000, $e->interesMes());
+
+        // [días transcurridos => interés corrido esperado]
+        $casos = [
+            [0, 0],        // mismo día: nada
+            [5, 20000],    // 1er cuarto (mitad de la mitad)
+            [15, 40000],   // mitad de mes
+            [20, 60000],   // 3er cuarto
+            [30, 80000],   // mes completo
+            [45, 120000],  // más de un mes: sigue corriendo
+        ];
+
+        foreach ($casos as [$dias, $esperado]) {
+            $e->inicio = now()->subDays($dias);
+            $this->assertEquals($esperado, $e->interesCorrido(), "a los {$dias} días");
+        }
+    }
+
+    public function test_pago_con_interes_recibido_distinto(): void
+    {
+        $this->actingAs($this->owner());
+        $e = Empeno::where('estado', 'activo')->firstOrFail();
+        $cajaAntes = (int) $e->negocio->caja;
+
+        $this->post("/empenos/{$e->id}/pago", ['interes_recibido' => 12345])->assertRedirect();
+
+        $this->assertEquals($cajaAntes + 12345, (int) $e->negocio()->first()->caja);
+        $this->assertDatabaseHas('pagos', ['empeno_id' => $e->id, 'interes' => 12345]);
+    }
+
+    public function test_retiro_con_valor_recibido(): void
+    {
+        $this->actingAs($this->owner());
+        $e = Empeno::where('estado', 'activo')->firstOrFail();
+        $n = $e->negocio;
+        $cajaAntes = (int) $n->caja;
+        $prestadoAntes = (int) $n->prestado;
+        $saldo = (int) $e->saldo;
+        $recibido = $saldo + 12345; // valor distinto al esperado
+
+        $this->post("/empenos/{$e->id}/retirar", ['valor_recibido' => $recibido])->assertRedirect();
+
+        $e->refresh();
+        $n->refresh();
+        $this->assertEquals('retirado', $e->estado);
+        $this->assertEquals(0, (int) $e->saldo);
+        $this->assertEquals($cajaAntes + $recibido, (int) $n->caja);
+        $this->assertEquals($prestadoAntes - $saldo, (int) $n->prestado);
+    }
+
     public function test_admin_sin_locales_va_al_panel(): void
     {
         // Producción recién desplegada: hay admin pero aún no hay locales.

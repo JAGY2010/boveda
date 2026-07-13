@@ -46,10 +46,10 @@ class Ledger
     }
 
     /** Pagar la cuota de interés del mes: corre el vencimiento +1 mes. */
-    public static function pagarInteres(Empeno $e): void
+    public static function pagarInteres(Empeno $e, ?int $interesRecibido = null): void
     {
-        DB::transaction(function () use ($e) {
-            $v = $e->interesMes();
+        DB::transaction(function () use ($e, $interesRecibido) {
+            $v = $interesRecibido ?? $e->interesMes();
             $e->increment('meses_pagados');
             $e->pagos()->create([
                 'fecha' => now()->toDateString(),
@@ -66,11 +66,11 @@ class Ledger
     }
 
     /** Abonar a capital (siempre pagando además el interés del mes). */
-    public static function abonar(Empeno $e, int $abono): void
+    public static function abonar(Empeno $e, int $abono, ?int $interesRecibido = null): void
     {
-        DB::transaction(function () use ($e, $abono) {
+        DB::transaction(function () use ($e, $abono, $interesRecibido) {
             $abono = (int) min($abono, $e->saldo);
-            $v = $e->interesMes();
+            $v = $interesRecibido ?? $e->interesMes();
 
             $e->increment('meses_pagados');
             $e->decrement('saldo', $abono);
@@ -90,17 +90,18 @@ class Ledger
     }
 
     /** El cliente retira: el capital regresa a caja (más el interés corrido). */
-    public static function retirar(Empeno $e): void
+    public static function retirar(Empeno $e, ?int $valorRecibido = null): void
     {
-        DB::transaction(function () use ($e) {
-            $corr = $e->interesCorrido();
+        DB::transaction(function () use ($e, $valorRecibido) {
             $saldo = (int) $e->saldo;
+            $recibido = $valorRecibido ?? $e->deudaHoy();
+            $interes = $recibido - $saldo; // ganancia real (puede diferir de lo esperado)
 
             $n = $e->negocio;
-            $n->increment('caja', $saldo + $corr);
+            $n->increment('caja', $recibido);
             $n->decrement('prestado', $saldo);
-            $n->increment('acum_interes', $corr);
-            self::mov($n, "Retiro empeño #{$e->numero} (capital+interés)", $saldo + $corr);
+            $n->increment('acum_interes', $interes);
+            self::mov($n, "Retiro empeño #{$e->numero}", $recibido);
 
             $e->update(['estado' => 'retirado', 'saldo' => 0]);
         });
