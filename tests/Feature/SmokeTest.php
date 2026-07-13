@@ -137,6 +137,13 @@ class SmokeTest extends TestCase
         // Producción recién desplegada: hay admin pero aún no hay locales.
         $admin = User::factory()->create(['role' => 'admin', 'negocio_id' => null]);
 
-        $this->actingAs($admin)->get('/dashboard')->assertRedirect(route('admin.locales.index'));
+        // Todas las pantallas operativas redirigen al panel (sin 500).
+        foreach (['/dashboard', '/clientes', '/empenos', '/inventario', '/contabilidad', '/configuracion'] as $ruta) {
+            $this->actingAs($admin)->get($ruta)->assertRedirect(route('admin.locales.index'));
+        }
+
+        // El panel de administración SÍ funciona sin locales.
+        $this->actingAs($admin)->get('/admin/locales')->assertOk();
+        $this->actingAs($admin)->get('/admin/usuarios')->assertOk();
     }
 }
