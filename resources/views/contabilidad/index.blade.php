@@ -40,7 +40,7 @@
                     <p class="mb-3 text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Capital</p>
                     <form method="POST" action="{{ route('contabilidad.capital') }}" class="flex flex-wrap items-center gap-2">
                         @csrf
-                        <input type="number" name="monto" required placeholder="500000" class="w-32 rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                        <input type="text" inputmode="numeric" name="monto" required placeholder="500.000" class="money w-32 rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                         <button name="tipo" value="agregar" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">+ Agregar</button>
                         <button name="tipo" value="retirar" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">− Retirar</button>
                     </form>
@@ -52,7 +52,7 @@
                         @csrf
                         <input name="categoria" required placeholder="Arriendo, nómina, servicios…" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                         <div class="flex gap-2">
-                            <input type="number" name="monto" required placeholder="200000" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            <input type="text" inputmode="numeric" name="monto" required placeholder="200.000" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                             <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Guardar</button>
                         </div>
                     </form>

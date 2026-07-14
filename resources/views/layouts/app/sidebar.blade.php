@@ -161,6 +161,7 @@
             </flux:toast.group>
         @endpersist
 
+        <script src="{{ asset('js/money.js') }}"></script>
         @fluxScripts
     </body>
 </html>

@@ -40,7 +40,7 @@
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Capital inicial en caja</label>
-                    <input type="number" name="caja_inicial" value="{{ old('caja_inicial', 0) }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                    <input type="text" inputmode="numeric" name="caja_inicial" value="{{ old('caja_inicial', 0) }}" required class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">N° inicial del talonario</label>

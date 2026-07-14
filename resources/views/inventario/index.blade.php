@@ -17,7 +17,7 @@
             </div>
             <div>
                 <label class="mb-1 block text-xs font-semibold text-zinc-500">Valor de compra</label>
-                <input type="number" name="costo" required placeholder="300000" class="w-40 rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                <input type="text" inputmode="numeric" name="costo" required placeholder="300.000" class="money w-40 rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
             </div>
             <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Comprar</button>
         </form>
@@ -43,7 +43,7 @@
                             <td class="px-4 py-3">
                                 <form method="POST" action="{{ route('inventario.vender', $it) }}" class="flex items-center justify-end gap-2">
                                     @csrf
-                                    <input type="number" name="valor" required placeholder="{{ round($it->costo * 1.4) }}" class="w-32 rounded-lg border border-zinc-300 bg-zinc-50 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                                    <input type="text" inputmode="numeric" name="valor" required placeholder="{{ number_format(round($it->costo * 1.4), 0, ',', '.') }}" class="money w-32 rounded-lg border border-zinc-300 bg-zinc-50 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                                     <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500">Vender</button>
                                 </form>
                             </td>

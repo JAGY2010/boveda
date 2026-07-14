@@ -67,12 +67,12 @@
                             @csrf
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Interés recibido</label>
-                                <input type="number" name="interes_recibido" value="{{ $empeno->interesMes() }}" min="0" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                                <input type="text" inputmode="numeric" name="interes_recibido" value="{{ $empeno->interesMes() }}" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                                 <p class="mt-1 text-xs text-zinc-400">Cuota del mes: {{ cop($empeno->interesMes()) }}. Corre el vencimiento +1 mes. Ajusta si recibiste otro valor.</p>
                             </div>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Abono a capital (opcional)</label>
-                                <input type="number" name="abono" placeholder="0" min="0" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                                <input type="text" inputmode="numeric" name="abono" placeholder="0" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                             </div>
                             <button type="submit" class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Registrar pago del mes</button>
                         </form>
@@ -83,7 +83,7 @@
                         <form method="POST" action="{{ route('empenos.retirar', $empeno) }}" onsubmit="return confirm('¿Confirmar el retiro? El capital vuelve a caja y el empeño se cierra.')">
                             @csrf
                             <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Valor recibido</label>
-                            <input type="number" name="valor_recibido" value="{{ $empeno->deudaHoy() }}" min="0" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            <input type="text" inputmode="numeric" name="valor_recibido" value="{{ $empeno->deudaHoy() }}" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                             <p class="mt-1 text-xs text-zinc-400">Esperado: {{ cop($empeno->deudaHoy()) }} (saldo {{ cop($empeno->saldo) }} + interés por cuartos {{ cop($empeno->interesCorrido()) }}). Ajusta si recibiste otro valor.</p>
                             <button type="submit" class="mt-3 w-full rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-400">Registrar retiro</button>
                         </form>

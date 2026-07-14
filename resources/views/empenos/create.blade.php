@@ -80,7 +80,7 @@
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div>
                         <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Valor a prestar</label>
-                        <input type="number" name="principal" id="e_val" value="{{ old('principal') }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                        <input type="text" inputmode="numeric" name="principal" id="e_val" value="{{ old('principal') }}" required class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                     </div>
                     <div>
                         <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Interés mensual (%)</label>
@@ -340,7 +340,7 @@
                 '<div class="text-xs text-zinc-500">valor estimado ' + cop(est) + ' × ' + LTV + '% · <a href="#" onclick="usarSug(' + sug + ');return false;" class="font-bold text-emerald-600">Usar este valor</a></div>';
         };
 
-        window.usarSug = function (v) { document.getElementById('e_val').value = v; };
+        window.usarSug = function (v) { var el = document.getElementById('e_val'); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
 
         window.toggleCli = function (mode) {
             var ex = document.getElementById('cli_ex'), nu = document.getElementById('cli_nu');
