@@ -14,7 +14,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Contrato No. {{ $empeno->numero }} — {{ $neg->nombre }}</title>
     <style>
-        @page { size: letter portrait; margin: 0.25in; }
+        @page { size: letter portrait; margin: 0.22in; }
         * { box-sizing: border-box; }
         body { margin: 0; background: #71716f; font-family: Georgia, 'Times New Roman', serif; color: #16130f; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
@@ -23,44 +23,47 @@
         .btn.sec { background: #fff; color: #333; border: 1px solid #bbb; }
 
         .page { width: 8in; margin: 0 auto; background: #fff; }
-        .copy { position: relative; height: 5.2in; padding: 12px 14px; overflow: hidden; display: flex; gap: 10px; font-size: 9.7px; line-height: 1.3; }
-        .copy.first { border-bottom: 1px dashed #999; }
+        .copy { position: relative; height: 5.25in; padding: 15px 17px; overflow: hidden; display: flex; gap: 14px; font-size: 10.7px; line-height: 1.46; }
+        .copy.first { border-bottom: 1.5px dashed #b8b8b8; }
 
-        .main { flex: 1; min-width: 0; position: relative; }
-        .stub { width: 1.55in; flex-shrink: 0; border-left: 1px dashed #999; padding-left: 9px; font-size: 8.7px; line-height: 1.35; }
+        .main { flex: 1; min-width: 0; position: relative; display: flex; flex-direction: column; }
+        .stub { width: 1.55in; flex-shrink: 0; border-left: 1.5px dashed #b8b8b8; padding-left: 11px; font-size: 9.4px; line-height: 1.45; }
 
-        .corner { position: absolute; top: 0; right: 0; text-align: right; }
-        .copytag { font-family: system-ui, sans-serif; font-size: 7.5px; color: #9a9a9a; text-transform: uppercase; letter-spacing: .07em; }
-        .no { text-align: right; font-size: 10px; }
-        .no b { color: #b0281e; font-size: 14px; }
-        .logo { position: absolute; top: 0; left: 0; max-width: 50px; max-height: 44px; object-fit: contain; }
-        .head { text-align: center; border-bottom: 1.5px solid #16130f; padding-bottom: 4px; margin-bottom: 4px; }
-        .wm { font-size: 17px; font-weight: bold; line-height: 1.02; }
+        .corner { position: absolute; top: 2px; right: 0; text-align: right; }
+        .copytag { font-family: system-ui, sans-serif; font-size: 8px; color: #9a9a9a; text-transform: uppercase; letter-spacing: .08em; }
+        .no { font-size: 11px; }
+        .no b { color: #b0281e; font-size: 16px; }
+
+        .logo { position: absolute; top: 0; left: 0; width: 60px; height: 54px; object-fit: contain; border: 1px solid #e3e3e3; border-radius: 5px; background: #fff; padding: 2px; }
+
+        .head { text-align: center; border-bottom: 2px solid #16130f; padding: 2px 0 7px; margin-bottom: 2px; }
+        .wm { font-size: 23px; font-weight: bold; letter-spacing: .01em; line-height: 1.05; }
         .wm .r { color: #b0281e; }
-        .sub { font-size: 8px; color: #444; margin-top: 2px; }
+        .sub { font-size: 8.6px; color: #555; margin-top: 4px; }
 
-        .banner { background: #b0281e; color: #fff; font-weight: bold; text-align: center; padding: 3px 6px; margin: 6px 0; font-size: 9px; display: flex; justify-content: space-between; align-items: center; letter-spacing: .02em; }
-        .banner .amt { background: #fff; color: #16130f; padding: 0 6px; border-radius: 2px; }
+        .banner { position: relative; background: #b0281e; color: #fff; font-weight: bold; text-align: center; padding: 6px 78px; margin: 10px 0 9px; font-size: 11.5px; letter-spacing: .04em; }
+        .banner .amt { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); background: #fff; color: #16130f; padding: 2px 9px; border-radius: 3px; font-size: 11px; font-weight: bold; }
 
-        p { margin: 0 0 5px; text-align: justify; }
-        .fill { border-bottom: 1px solid #666; padding: 0 3px; font-weight: bold; }
-        .row { margin-bottom: 5px; }
-        .muted-note { text-align: center; }
-        .dataauth { font-size: 7.6px; color: #444; margin-top: 6px; text-align: justify; }
+        p { margin: 0 0 8px; text-align: justify; }
+        .fill { border-bottom: 1px solid #555; padding: 0 4px; font-weight: bold; }
+        .row { margin-bottom: 8px; }
+        .muted-note { text-align: center; margin-top: 4px; }
 
-        .firmas { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 9px; }
+        .firmas { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: auto; padding-top: 14px; font-size: 10px; }
         .firmas .l { flex: 1; }
-        .firmas .line { border-top: 1px solid #16130f; margin-top: 22px; padding-top: 2px; text-align: center; }
-        .huella-box { width: 44px; height: 52px; border: 1px solid #16130f; border-radius: 2px; }
-        .huella-lbl { font-size: 7px; margin-top: 2px; text-transform: uppercase; text-align: center; }
+        .firmas .line { border-top: 1px solid #16130f; margin-top: 30px; padding-top: 3px; text-align: center; }
+        .huella-box { width: 54px; height: 62px; border: 1.2px solid #16130f; border-radius: 3px; }
+        .huella-lbl { font-size: 8px; margin-top: 3px; text-transform: uppercase; text-align: center; letter-spacing: .04em; }
 
-        .foot { margin-top: 6px; font-size: 7px; color: #555; text-align: center; text-transform: uppercase; line-height: 1.4; }
+        .dataauth { font-size: 8.2px; color: #555; margin-top: 9px; text-align: justify; }
+        .foot { margin-top: 7px; font-size: 8px; color: #666; text-align: center; text-transform: uppercase; letter-spacing: .02em; line-height: 1.45; }
         .foot b { color: #b0281e; }
 
-        .stub .sbox { width: 100%; height: 46px; border: 1px solid #16130f; border-radius: 2px; margin: 6px 0; }
-        .stub .samt { text-align: center; font-weight: bold; margin-bottom: 6px; }
-        .stub .sl { margin: 5px 0; }
-        .stub .sl b { color: #16130f; }
+        .stub .srow { margin: 6px 0; }
+        .stub .srow b { color: #16130f; }
+        .stub .sbox { width: 100%; height: 58px; border: 1.2px solid #16130f; border-radius: 3px; margin-top: 4px; }
+        .stub .sboxlbl { font-size: 7.6px; text-align: center; color: #777; text-transform: uppercase; letter-spacing: .05em; margin: 2px 0 8px; }
+        .stub .samt { text-align: center; font-weight: bold; font-size: 11px; margin: 6px 0; }
 
         @media screen {
             body { padding: 16px 10px; }
@@ -100,20 +103,20 @@
                     </div>
 
                     <div class="banner">
-                        <span>COMPRAVENTA CON PACTO DE RETROVENTA</span>
+                        COMPRAVENTA CON PACTO DE RETROVENTA
                         <span class="amt">{{ cop($empeno->principal) }}</span>
                     </div>
 
                     <div class="row">
-                        Iniciación: <span class="fill">{{ $empeno->inicio->format('d/m/Y') }}</span>&nbsp;&nbsp;
+                        Fecha de iniciación: <span class="fill">{{ $empeno->inicio->format('d/m/Y') }}</span>&nbsp;&nbsp;
                         Vencimiento: <span class="fill">{{ $empeno->vencimiento()->format('d/m/Y') }}</span>
                     </div>
 
-                    <p>VENDEDOR: <span class="fill">{{ $cli->nombre }}</span>, C.C. <span class="fill">{{ $cli->cedula }}</span>, mayor y vecino(a) de <span class="fill">{{ $neg->ciudad }}</span>, dir. <span class="fill">{{ $cli->direccion }}</span>, Cel. <span class="fill">{{ $cli->tel }}</span>.</p>
+                    <p>VENDEDOR: <span class="fill">{{ $cli->nombre }}</span>, C.C. <span class="fill">{{ $cli->cedula }}</span>, mayor y vecino(a) de <span class="fill">{{ $neg->ciudad }}</span>, dirección <span class="fill">{{ $cli->direccion }}</span>, Cel. <span class="fill">{{ $cli->tel }}</span>.</p>
 
                     <p>Manifiesto que TRANSFIERO A TÍTULO DE VENTA REAL Y ENAJENACIÓN PERPETUA a favor de {{ $neg->nombre }}, bajo condición resolutoria de <i>pacto de retroventa</i>; el vendedor se reserva la facultad de recobrar la(s) cosa(s) vendida(s) (Art. 1939 del C.C.). Bienes de mi exclusiva propiedad y origen lícito, que describo: <span class="fill">{{ $empeno->articulo }}{{ $empeno->serial ? ' · '.$empeno->serial : '' }}</span>.</p>
 
-                    <p>Precio de venta convenido: <span class="fill">{{ cop($empeno->principal) }}</span>@if($enLetras) (<span class="fill">{{ $enLetras }}</span>)@endif, dinero que declaro recibir a entera satisfacción de manos del comprador.</p>
+                    <p>Precio de venta convenido: <span class="fill">{{ cop($empeno->principal) }}</span> (<span class="fill">{{ $enLetras }}</span>), dinero que declaro recibir a entera satisfacción de manos del comprador.</p>
 
                     <p>Para RETROTRAER LA VENTA: el vendedor pagará al comprador el valor de la venta más un <span class="fill">{{ $pct }}%</span> por mes o fracción, sobre el valor de la venta. Término para recobrar: <span class="fill">{{ $empeno->plazo }} meses</span> desde la fecha, modificable por escrito y mutuo acuerdo. El comprador no responde por fuerza mayor, caso fortuito, hurto calificado ni deterioro normal del bien. En caso de pérdida, el comprador entregará un artículo similar. Se rige por los Arts. 1939 y ss. del Código Civil, el Código de Comercio y normas concordantes.</p>
 
@@ -122,7 +125,7 @@
                     <div class="firmas">
                         <div class="l"><div class="line">Firma comprador</div></div>
                         <div class="l"><div class="line">Firma vendedor · C.C. {{ $cli->cedula }}</div></div>
-                        <div><div class="huella-box"></div><div class="huella-lbl">Huella</div></div>
+                        <div><div class="huella-box"></div><div class="huella-lbl">Huella vendedor</div></div>
                     </div>
 
                     <div class="dataauth">El vendedor declara el origen lícito del bien y autoriza el tratamiento de sus datos personales (Ley 1581 de 2012) para la gestión de esta operación y el envío de recordatorios de pago.</div>
@@ -133,14 +136,17 @@
                 </div>
 
                 <div class="stub">
-                    <div class="no">No. <b>{{ $empeno->numero }}</b></div>
-                    <div class="sbox"></div>
+                    <div class="corner" style="position: static; text-align: right;">
+                        <div class="no">No. <b>{{ $empeno->numero }}</b></div>
+                    </div>
                     <div class="samt">{{ cop($empeno->principal) }}</div>
-                    <div class="sl"><b>COMPRADOR:</b><br>{{ $neg->nombre }}</div>
-                    <div class="sl"><b>VENDEDOR:</b><br>{{ $cli->nombre }}</div>
-                    <div class="sl"><b>C.C.:</b> {{ $cli->cedula }}</div>
-                    <div class="sl"><b>Vence:</b> {{ $empeno->vencimiento()->format('d/m/Y') }}</div>
-                    <div class="sl">{{ $neg->ciudad }}</div>
+                    <div class="srow"><b>COMPRADOR:</b><br>{{ $neg->nombre }}</div>
+                    <div class="srow"><b>VENDEDOR:</b><br>{{ $cli->nombre }}</div>
+                    <div class="srow"><b>C.C.:</b> {{ $cli->cedula }}</div>
+                    <div class="srow"><b>Vence:</b> {{ $empeno->vencimiento()->format('d/m/Y') }}</div>
+                    <div class="srow">{{ $neg->ciudad }}</div>
+                    <div class="sbox"></div>
+                    <div class="sboxlbl">Huella / Firma</div>
                 </div>
             </div>
         @endforeach
