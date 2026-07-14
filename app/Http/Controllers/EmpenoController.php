@@ -151,7 +151,7 @@ class EmpenoController
     public function contrato(Empeno $empeno)
     {
         $this->guard($empeno);
-        $empeno->load('cliente', 'negocio');
+        $empeno->load('cliente', 'negocio', 'pagos');
 
         return view('empenos.contrato', compact('empeno'));
     }

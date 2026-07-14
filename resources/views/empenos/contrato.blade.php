@@ -17,6 +17,20 @@
     }
 
     $im = (int) round($empeno->principal * $empeno->pct / 100); // interés mensual del contrato
+
+    // Registro de abonos: autollenado con los pagos ya hechos; el resto en blanco.
+    $filas = [];
+    foreach ($empeno->pagos as $p) {
+        $filas[] = [
+            'fecha' => \Illuminate\Support\Carbon::parse($p->fecha)->format('d/m/Y'),
+            'valor' => cop((int) $p->interes + (int) $p->abono),
+        ];
+    }
+    $porTabla = max(7, (int) ceil($empeno->pagos->count() / 2) + 1);
+    while (count($filas) < $porTabla * 2) {
+        $filas[] = ['fecha' => '', 'valor' => ''];
+    }
+    $abColumnas = [array_slice($filas, 0, $porTabla), array_slice($filas, $porTabla, $porTabla)];
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -67,7 +81,9 @@
 
         .ab th, .ab td { border: 1px solid #bbb; padding: 3px 4px; text-align: center; }
         .ab .lh th { background: #f0eae9; font-weight: bold; }
-        .ab td { height: 17px; }
+        .ab td { height: 16px; }
+        .abwrap { display: flex; gap: 12px; align-items: flex-start; }
+        .abwrap .ab { width: 50%; }
 
         .prorroga { margin: 6px 0; }
         .blank { display: inline-block; min-width: 95px; border-bottom: 1px solid #999; }
@@ -182,15 +198,17 @@
                 </tr>
             </table>
 
-            <div class="sec">REGISTRO DE ABONOS <span class="dim">(todo abono debe quedar registrado aquí y firmado por quien recibe)</span></div>
-            <table class="ab">
-                <tr class="lh">
-                    <th>Fecha</th><th>Valor abonado</th><th>Saldo</th><th>Recibe (firma)</th><th>Nuevo vencimiento</th>
-                </tr>
-                @for ($i = 0; $i < 3; $i++)
-                    <tr><td></td><td></td><td></td><td></td><td></td></tr>
-                @endfor
-            </table>
+            <div class="sec">REGISTRO DE ABONOS <span class="dim">(los pagos hechos salen registrados; firme quien recibe cada nuevo abono)</span></div>
+            <div class="abwrap">
+                @foreach ($abColumnas as $col)
+                    <table class="ab">
+                        <tr class="lh"><th>Fecha</th><th>Valor abonado</th><th>Firma</th></tr>
+                        @foreach ($col as $f)
+                            <tr><td>{{ $f['fecha'] }}</td><td>{{ $f['valor'] }}</td><td></td></tr>
+                        @endforeach
+                    </table>
+                @endforeach
+            </div>
 
             <div class="prorroga"><b>PRÓRROGA (solo por escrito):</b> Nuevo vencimiento: <span class="blank"></span> Firma comprador: <span class="blank"></span> Firma vendedor: <span class="blank"></span></div>
 
