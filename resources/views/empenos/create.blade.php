@@ -31,6 +31,10 @@
                 </div>
 
                 <div id="cli_nu" class="hidden space-y-3">
+                    <div class="rounded-lg border border-emerald-600/40 bg-emerald-500/10 px-3 py-2">
+                        <button type="button" data-escaner="cedula" data-result="scan_cli" class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">📷 Escanear código de la cédula (reverso)</button>
+                        <div id="scan_cli" class="mt-1 text-xs text-zinc-500">Toma la foto del código de barras del <b>reverso</b>. Rellena nombre y cédula; la dirección y el celular se escriben a mano.</div>
+                    </div>
                     <input name="nuevo_nombre" placeholder="Nombre completo" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                     <div class="grid gap-3 sm:grid-cols-2">
                         <input name="nuevo_cedula" placeholder="Cédula" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
@@ -46,6 +50,10 @@
                     <select name="categoria" id="e_cat" onchange="onCatChange()" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"></select>
                     <input id="e_cat_free" name="categoria" type="text" placeholder="Escribe la categoría" class="mt-2 hidden w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" disabled>
                     <button type="button" id="e_cat_back" onclick="catBack()" class="mt-1 hidden text-xs font-semibold text-emerald-600">↺ elegir de la lista</button>
+                </div>
+                <div class="rounded-lg border border-emerald-600/40 bg-emerald-500/10 px-3 py-2">
+                    <button type="button" data-escaner="tarjeta" data-result="scan_tp" class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">📷 Escanear tarjeta de propiedad (moto/vehículo)</button>
+                    <div id="scan_tp" class="mt-1 text-xs text-zinc-500">Toma la foto del código de barras del <b>reverso</b> de la tarjeta plástica. Rellena la placa y el modelo; completa el resto a mano.</div>
                 </div>
                 <div id="attrs" class="space-y-3"></div>
                 <div>
@@ -236,6 +244,36 @@
 
         window.renderAttrs = function () { renderAttrsFor(currentCat()); };
 
+        // Fija un valor en un campo de atributo, sea lista (usa "Otra" si no está) o texto.
+        function setAttr(k, val) {
+            var sel = document.getElementById('at_' + k);
+            if (!sel || !val) return;
+            if (sel.tagName === 'SELECT') {
+                var found = false;
+                for (var i = 0; i < sel.options.length; i++) {
+                    if (sel.options[i].value === val || sel.options[i].text === val) { sel.value = sel.options[i].value; found = true; break; }
+                }
+                if (!found) {
+                    sel.value = OTRO; onCombo(k);
+                    var free = document.getElementById('at_' + k + '_free');
+                    if (free) free.value = val;
+                }
+            } else {
+                sel.value = val;
+            }
+            recalcSug();
+        }
+
+        // Llamado por el escáner de tarjeta de propiedad: precarga Moto + placa + modelo(año).
+        window.llenarDesdeTarjeta = function (data) {
+            var cat = document.getElementById('e_cat');
+            if (cat.disabled) catBack();
+            cat.value = 'Moto';
+            renderAttrsFor('Moto');
+            if (data.placa) setAttr('placa', data.placa);
+            if (data.anio) setAttr('anio', data.anio);
+        };
+
         window.onCatChange = function () {
             var sel = document.getElementById('e_cat');
             if (sel.value === OTRO) {
@@ -322,4 +360,5 @@
     })();
     </script>
     @endverbatim
+    <script src="{{ asset('js/escaner.js') }}"></script>
 </x-layouts::app>
