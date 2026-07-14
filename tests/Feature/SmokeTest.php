@@ -57,7 +57,19 @@ class SmokeTest extends TestCase
         $empleado = User::where('email', 'empleado@boveda.test')->firstOrFail();
 
         $this->actingAs($empleado)->get('/contabilidad')->assertForbidden();
+        $this->actingAs($empleado)->get('/configuracion')->assertForbidden();
         $this->actingAs($empleado)->get('/empenos')->assertOk();
+    }
+
+    public function test_numero_a_letras(): void
+    {
+        $this->assertEquals('cero', numeroALetras(0));
+        $this->assertEquals('mil', numeroALetras(1000));
+        $this->assertEquals('cien mil', numeroALetras(100000));
+        $this->assertEquals('veintiún mil', numeroALetras(21000));
+        $this->assertEquals('un millón', numeroALetras(1000000));
+        $this->assertEquals('un millón doscientos mil', numeroALetras(1200000));
+        $this->assertEquals('un millón doscientos treinta y cuatro mil quinientos sesenta y siete', numeroALetras(1234567));
     }
 
     public function test_pago_corre_el_vencimiento(): void

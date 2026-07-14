@@ -57,9 +57,11 @@
                             {{ __('Empleados') }}
                         </flux:sidebar.item>
                     @endif
-                    <flux:sidebar.item icon="cog-6-tooth" :href="route('config.edit')" :current="request()->routeIs('config.*')" wire:navigate>
-                        {{ __('Configuración') }}
-                    </flux:sidebar.item>
+                    @if (auth()->user()->puedeEditar())
+                        <flux:sidebar.item icon="cog-6-tooth" :href="route('config.edit')" :current="request()->routeIs('config.*')" wire:navigate>
+                            {{ __('Configuración') }}
+                        </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.nav>
 
                 @if (auth()->user()->isAdmin())

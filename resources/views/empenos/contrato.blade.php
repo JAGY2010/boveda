@@ -5,11 +5,7 @@
     $w1 = \Illuminate\Support\Str::upper($parts[0]);
     $w2 = isset($parts[1]) ? \Illuminate\Support\Str::upper($parts[1]) : '';
     $pct = rtrim(rtrim((string) $empeno->pct, '0'), '.');
-    $enLetras = null;
-    try {
-        $enLetras = \Illuminate\Support\Str::upper(\Illuminate\Support\Number::spell((int) $empeno->principal, 'es')).' PESOS M/CTE';
-    } catch (\Throwable $e) {
-    }
+    $enLetras = \Illuminate\Support\Str::upper(numeroALetras((int) $empeno->principal)).' PESOS M/CTE';
 @endphp
 <!DOCTYPE html>
 <html lang="es">

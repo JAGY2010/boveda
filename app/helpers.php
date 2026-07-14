@@ -10,6 +10,81 @@ if (! function_exists('cop')) {
     }
 }
 
+if (! function_exists('numeroALetras')) {
+    /**
+     * Convierte un entero a palabras en español (sin depender de la extensión intl).
+     * Pensado para montos en pesos: 1200000 -> "un millón doscientos mil".
+     * Soporta hasta 999.999.999 (más que suficiente para un empeño).
+     */
+    function numeroALetras(int $n): string
+    {
+        if ($n === 0) {
+            return 'cero';
+        }
+        if ($n < 0) {
+            return 'menos '.numeroALetras(-$n);
+        }
+
+        $decenas = ['', '', '', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+        $centenas = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+        $u = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho', 'veintinueve'];
+
+        // Convierte 1..999. $apoc apocopa "uno"->"un", "veintiuno"->"veintiún" (antes de mil/millones/pesos).
+        $g = function (int $num, bool $apoc) use ($decenas, $centenas, $u): string {
+            if ($num === 100) {
+                return 'cien';
+            }
+            $r = '';
+            $c = intdiv($num, 100);
+            $resto = $num % 100;
+            if ($c > 0) {
+                $r .= $centenas[$c].' ';
+            }
+            if ($resto > 0) {
+                if ($resto < 30) {
+                    $w = $u[$resto];
+                    if ($apoc && $resto === 1) {
+                        $w = 'un';
+                    } elseif ($apoc && $resto === 21) {
+                        $w = 'veintiún';
+                    }
+                    $r .= $w;
+                } else {
+                    $d = intdiv($resto, 10);
+                    $un = $resto % 10;
+                    $r .= $decenas[$d];
+                    if ($un > 0) {
+                        $w = $u[$un];
+                        if ($apoc && $un === 1) {
+                            $w = 'un';
+                        }
+                        $r .= ' y '.$w;
+                    }
+                }
+            }
+
+            return trim($r);
+        };
+
+        $millones = intdiv($n, 1000000);
+        $miles = intdiv($n % 1000000, 1000);
+        $resto = $n % 1000;
+
+        $texto = '';
+        if ($millones > 0) {
+            $texto .= ($millones === 1 ? 'un millón' : $g($millones, true).' millones').' ';
+        }
+        if ($miles > 0) {
+            $texto .= ($miles === 1 ? 'mil' : $g($miles, true).' mil').' ';
+        }
+        if ($resto > 0) {
+            $texto .= $g($resto, true);
+        }
+
+        return trim($texto);
+    }
+}
+
 if (! function_exists('local')) {
     /** El local (negocio) activo del usuario: el seleccionado o el primero al que tiene acceso. */
     function local(): ?\App\Models\Negocio

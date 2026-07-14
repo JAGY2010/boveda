@@ -6,8 +6,15 @@ use Illuminate\Http\Request;
 
 class ConfiguracionController
 {
+    /** La configuración del negocio es solo para el dueño (y el admin). */
+    private function guard(): void
+    {
+        abort_unless(auth()->user()->puedeEditar(), 403);
+    }
+
     public function edit()
     {
+        $this->guard();
         $negocio = local();
 
         return view('configuracion.edit', compact('negocio'));
@@ -15,6 +22,7 @@ class ConfiguracionController
 
     public function update(Request $r)
     {
+        $this->guard();
         $negocio = local();
 
         $data = $r->validate([
