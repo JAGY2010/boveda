@@ -28,6 +28,8 @@ class Ledger
                 'atributos' => $data['atributos'] ?? [],
                 'articulo' => $data['articulo'],
                 'serial' => $data['serial'] ?? null,
+                'color' => $data['color'] ?? null,
+                'observaciones' => $data['observaciones'] ?? null,
                 'principal' => $principal,
                 'saldo' => $principal,
                 'pct' => $data['pct'],

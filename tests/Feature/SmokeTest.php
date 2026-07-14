@@ -90,15 +90,22 @@ class SmokeTest extends TestCase
         $this->post('/empenos', [
             'nuevo_nombre' => 'Cliente Prueba',
             'nuevo_cedula' => '99999',
+            'nuevo_contacto2' => '3001112233',
             'categoria' => 'Moto',
             'atributos' => ['marca' => 'Honda', 'cilindraje' => '125', 'anio' => '2020'],
+            'color' => 'Negra',
+            'observaciones' => 'Buen estado general',
             'principal' => 500000,
             'pct' => 20,
             'plazo' => 4,
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('clientes', ['nombre' => 'Cliente Prueba']);
-        $this->assertDatabaseHas('empenos', ['saldo' => 500000, 'categoria' => 'Moto']);
+        $this->assertDatabaseHas('clientes', ['nombre' => 'Cliente Prueba', 'contacto2' => '3001112233']);
+        $this->assertDatabaseHas('empenos', ['saldo' => 500000, 'categoria' => 'Moto', 'color' => 'Negra', 'observaciones' => 'Buen estado general']);
+
+        // El contrato renderiza (2 copias, una por página) sin error.
+        $empeno = Empeno::where('color', 'Negra')->firstOrFail();
+        $this->get("/empenos/{$empeno->id}/contrato")->assertOk();
     }
 
     public function test_dueno_crea_empleado(): void

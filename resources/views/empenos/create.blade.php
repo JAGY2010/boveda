@@ -41,6 +41,7 @@
                         <input name="nuevo_tel" placeholder="Celular" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                     </div>
                     <input name="nuevo_direccion" placeholder="Dirección" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                    <input name="nuevo_contacto2" placeholder="Tel. de referencia / 2do contacto (opcional)" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                 </div>
 
                 {{-- Artículo --}}
@@ -57,8 +58,18 @@
                 </div>
                 <div id="attrs" class="space-y-3"></div>
                 <div>
-                    <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Serial / IMEI / Motor (opcional)</label>
+                    <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Serial / IMEI / Motor / Chasis (opcional)</label>
                     <input name="serial" placeholder="Para verificar y proteger el negocio" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                </div>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div>
+                        <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Color (opcional)</label>
+                        <input name="color" placeholder="Ej: Negra" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Estado / observaciones (opcional)</label>
+                        <input name="observaciones" placeholder="Ej: buen estado, rayón en el tanque" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                    </div>
                 </div>
 
                 {{-- Sugerido --}}

@@ -53,6 +53,9 @@ class EmpenoController
             'categoria' => 'required|string|max:50',
             'articulo' => 'nullable|string|max:255',
             'serial' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:100',
+            'observaciones' => 'nullable|string|max:255',
+            'nuevo_contacto2' => 'nullable|string|max:50',
             'principal' => 'required|integer|min:1',
             'pct' => 'required|numeric|min:0',
             'plazo' => 'required|integer|min:1',
@@ -65,6 +68,7 @@ class EmpenoController
                 'cedula' => $r->nuevo_cedula,
                 'tel' => $r->nuevo_tel,
                 'direccion' => $r->nuevo_direccion,
+                'contacto2' => $r->nuevo_contacto2,
             ]);
             $clienteId = $cliente->id;
         } else {
@@ -86,6 +90,8 @@ class EmpenoController
             'categoria' => $data['categoria'],
             'atributos' => $atributos,
             'serial' => $data['serial'] ?? null,
+            'color' => $data['color'] ?? null,
+            'observaciones' => $data['observaciones'] ?? null,
             'principal' => (int) $data['principal'],
             'pct' => $data['pct'],
             'plazo' => (int) $data['plazo'],
