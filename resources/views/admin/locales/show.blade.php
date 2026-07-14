@@ -25,14 +25,13 @@
                     <form method="POST" action="{{ route('admin.locales.renovar', $negocio) }}" class="flex items-end gap-2">
                         @csrf
                         <div>
-                            <label class="mb-1 block text-xs font-semibold text-zinc-500">Meses</label>
-                            <select name="meses" class="rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white">
-                                @foreach (range(1, 12) as $m)
-                                    <option value="{{ $m }}">{{ $m }} {{ $m === 1 ? 'mes' : 'meses' }}</option>
-                                @endforeach
-                            </select>
+                            <label class="mb-1 block text-xs font-semibold text-zinc-500">Vence el</label>
+                            <input type="date" name="fecha" required
+                                   value="{{ ($negocio->suscripcion_hasta && $negocio->suscripcion_hasta->isFuture()) ? $negocio->suscripcion_hasta->format('Y-m-d') : now()->addMonth()->format('Y-m-d') }}"
+                                   min="{{ now()->format('Y-m-d') }}"
+                                   class="rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                         </div>
-                        <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Renovar</button>
+                        <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Guardar</button>
                     </form>
 
                     @if ($negocio->suspendido)
@@ -49,7 +48,7 @@
                     @endif
                 </div>
             </div>
-            <p class="mt-3 text-xs text-zinc-400">Al renovar se suman los meses a la fecha vigente (si aún no vence) o desde hoy (si ya venció). Máximo recomendado: 12 meses.</p>
+            <p class="mt-3 text-xs text-zinc-400">Elige en el calendario la fecha hasta la que el local queda al día. Guardar también reactiva el acceso si estaba suspendido o vencido.</p>
         </div>
 
         {{-- Usuarios del local --}}

@@ -245,11 +245,17 @@ class SmokeTest extends TestCase
         $local = Negocio::query()->first();
         $local->update(['suscripcion_hasta' => now()->subDay()->toDateString(), 'suspendido' => false]);
 
-        // Renovar 2 meses (estaba vencido -> cuenta desde hoy) -> activa y futuro.
-        $this->actingAs($admin)->post(route('admin.locales.renovar', $local), ['meses' => 2])->assertRedirect();
+        // Fijar la fecha de vencimiento (calendario) -> activa, y reactiva.
+        $fecha = now()->addMonths(2)->toDateString();
+        $this->actingAs($admin)->post(route('admin.locales.renovar', $local), ['fecha' => $fecha])->assertRedirect();
         $local->refresh();
-        $this->assertTrue($local->suscripcion_hasta->isFuture());
+        $this->assertEquals($fecha, $local->suscripcion_hasta->toDateString());
         $this->assertEquals('activa', $local->estadoSuscripcion());
+
+        // Fecha en el pasado -> rechazada.
+        $this->actingAs($admin)
+            ->post(route('admin.locales.renovar', $local), ['fecha' => now()->subDay()->toDateString()])
+            ->assertSessionHasErrors('fecha');
 
         // Suspender -> bloqueada; Reactivar -> deja de estarlo.
         $this->actingAs($admin)->post(route('admin.locales.suspender', $local))->assertRedirect();

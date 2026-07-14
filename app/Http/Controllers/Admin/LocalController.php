@@ -83,24 +83,25 @@ class LocalController
         return redirect()->route('admin.locales.index')->with('ok', 'Local creado: '.$negocio->nombre);
     }
 
-    /** Renueva la suscripción entre 1 y 12 meses (suma a la fecha vigente o desde hoy). */
+    /** Fija la fecha de vencimiento (el admin la elige en el calendario) y reactiva el acceso. */
     public function renovar(Request $r, Negocio $negocio)
     {
         $this->guard();
 
-        $meses = max(1, min(12, (int) $r->input('meses', 1)));
+        $data = $r->validate(
+            ['fecha' => 'required|date|after_or_equal:today'],
+            [
+                'fecha.required' => 'Elige una fecha de vencimiento.',
+                'fecha.after_or_equal' => 'La fecha de vencimiento no puede ser en el pasado.',
+            ]
+        );
 
-        $base = ($negocio->suscripcion_hasta && $negocio->suscripcion_hasta->isFuture())
-            ? $negocio->suscripcion_hasta->copy()
-            : now();
-
-        $nueva = $base->addMonthsNoOverflow($meses);
         $negocio->update([
-            'suscripcion_hasta' => $nueva->toDateString(),
+            'suscripcion_hasta' => $data['fecha'],
             'suspendido' => false,
         ]);
 
-        return back()->with('ok', 'Suscripción de '.$negocio->nombre.' renovada hasta '.$nueva->format('d/m/Y'));
+        return back()->with('ok', 'Suscripción de '.$negocio->nombre.' al día · vence '.$negocio->suscripcion_hasta->format('d/m/Y'));
     }
 
     public function suspender(Negocio $negocio)
