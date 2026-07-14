@@ -83,7 +83,9 @@ class EmpenoController
         }
 
         $atributos = array_filter($data['atributos'] ?? [], fn ($v) => $v !== null && $v !== '');
-        $articulo = ($data['articulo'] ?? null) ?: trim($data['categoria'].' '.implode(' ', $atributos));
+        // El nombre del artículo no repite año/placa/imei (esos tienen su propio campo).
+        $nombreAttrs = collect($atributos)->except(['anio', 'placa', 'imei'])->all();
+        $articulo = ($data['articulo'] ?? null) ?: trim($data['categoria'].' '.implode(' ', $nombreAttrs));
 
         $empeno = Ledger::crearEmpeno($negocio, $clienteId, [
             'articulo' => $articulo,

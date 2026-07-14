@@ -16,6 +16,15 @@
         $serie = trim($serie.($serie ? ' · ' : '').$empeno->serial);
     }
 
+    // Nombre del artículo sin repetir año/placa/imei (que ya tienen su propio campo).
+    $nombreArticulo = $empeno->articulo;
+    if (! empty($attrs)) {
+        $limpio = collect($attrs)->except(['anio', 'placa', 'imei'])->filter(fn ($v) => $v !== null && $v !== '')->implode(' ');
+        if ($limpio !== '') {
+            $nombreArticulo = trim($empeno->categoria.' '.$limpio);
+        }
+    }
+
     $im = (int) round($empeno->principal * $empeno->pct / 100); // interés mensual del contrato
 
     // Registro de abonos: autollenado con los pagos ya hechos; el resto en blanco.
@@ -160,7 +169,7 @@
             <div class="sec">DESCRIPCIÓN DEL BIEN <span class="dim">(de exclusiva propiedad del vendedor, de origen lícito — Art. 1939 y ss. C.C.)</span></div>
             <table class="desc">
                 <tr>
-                    <td style="width:50%">Artículo: <b>{{ $empeno->articulo }}</b></td>
+                    <td style="width:50%">Artículo: <b>{{ $nombreArticulo }}</b></td>
                     <td>Marca / Modelo / Año: <b>{{ $marcaModelo }}{{ $anio ? ' - Mod. '.$anio : '' }}</b></td>
                 </tr>
                 <tr>
