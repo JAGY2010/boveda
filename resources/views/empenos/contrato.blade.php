@@ -92,7 +92,7 @@
         .ab .lh th { background: #f0eae9; font-weight: bold; }
         .ab td { height: 16px; }
         .abwrap { display: flex; gap: 12px; align-items: flex-start; }
-        .abwrap .ab { width: 50%; }
+        .abwrap .ab { flex: 1 1 0; min-width: 0; table-layout: fixed; }
 
         .prorroga { margin: 6px 0; }
         .blank { display: inline-block; min-width: 95px; border-bottom: 1px solid #999; }
@@ -131,8 +131,8 @@
     @foreach (['Copia comercio', 'Copia cliente'] as $copia)
         <div class="sheet">
             <div class="head">
-                @if ($neg->logo_path)
-                    <img class="logo" src="{{ asset($neg->logo_path) }}" alt="">
+                @if ($neg->logo_data || $neg->logo_path)
+                    <img class="logo" src="{{ $neg->logo_data ?: asset($neg->logo_path) }}" alt="">
                 @endif
                 <div class="corner">
                     <div class="copia">{{ $copia }}</div>

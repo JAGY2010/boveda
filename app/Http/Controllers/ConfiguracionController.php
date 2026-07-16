@@ -42,13 +42,9 @@ class ConfiguracionController
         unset($data['logo']);
 
         if ($r->hasFile('logo')) {
-            $dir = public_path('logos');
-            if (! is_dir($dir)) {
-                mkdir($dir, 0755, true);
-            }
-            $archivo = 'logo_'.$negocio->id.'_'.now()->timestamp.'.'.$r->file('logo')->getClientOriginalExtension();
-            $r->file('logo')->move($dir, $archivo);
-            $data['logo_path'] = 'logos/'.$archivo;
+            $file = $r->file('logo');
+            // Guardar el logo dentro de la BD (base64) para que NO se pierda en cada despliegue.
+            $data['logo_data'] = 'data:'.$file->getMimeType().';base64,'.base64_encode(file_get_contents($file->getRealPath()));
         }
 
         $negocio->update(array_merge($data, [

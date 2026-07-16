@@ -454,6 +454,21 @@ class SmokeTest extends TestCase
         $this->assertEquals($fecha, $pago->fecha->toDateString());
     }
 
+    public function test_logo_se_guarda_en_la_base_de_datos(): void
+    {
+        $dueno = $this->owner();
+        $negocio = Negocio::find($dueno->negocio_id);
+
+        $this->actingAs($dueno)->put('/configuracion', [
+            'nombre' => $negocio->nombre,
+            'plazo_default' => 4, 'pct_default' => 20, 'ltv_default' => 50,
+            'consecutivo_inicial' => 1,
+            'logo' => \Illuminate\Http\UploadedFile::fake()->image('logo.png', 80, 80),
+        ])->assertRedirect();
+
+        $this->assertStringStartsWith('data:image/', (string) $negocio->fresh()->logo_data);
+    }
+
     public function test_admin_sin_locales_va_al_panel(): void
     {
         // Producción recién desplegada: hay admin pero aún no hay locales.

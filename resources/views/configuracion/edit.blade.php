@@ -23,8 +23,8 @@
 
             <div>
                 <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Logo del negocio (aparece en el contrato)</label>
-                @if ($negocio->logo_path)
-                    <img src="{{ asset($negocio->logo_path) }}" alt="Logo actual" class="mb-2 h-16 rounded border border-zinc-200 bg-white p-1 dark:border-zinc-700" />
+                @if ($negocio->logo_data || $negocio->logo_path)
+                    <img src="{{ $negocio->logo_data ?: asset($negocio->logo_path) }}" alt="Logo actual" class="mb-2 h-16 rounded border border-zinc-200 bg-white p-1 dark:border-zinc-700" />
                 @endif
                 <input type="file" name="logo" accept="image/*" class="w-full text-sm text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white dark:text-zinc-300" />
                 <p class="mt-1 text-xs text-zinc-400">PNG o JPG, máx. 2 MB. Al guardar aparecerá en la cabecera del contrato.</p>
