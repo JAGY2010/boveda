@@ -91,13 +91,14 @@ class Ledger
     }
 
     /** Pagar la cuota de interés del mes: corre el vencimiento +1 mes. */
-    public static function pagarInteres(Empeno $e, ?int $interesRecibido = null): void
+    public static function pagarInteres(Empeno $e, ?int $interesRecibido = null, ?string $fecha = null): void
     {
-        DB::transaction(function () use ($e, $interesRecibido) {
+        DB::transaction(function () use ($e, $interesRecibido, $fecha) {
+            $fecha = $fecha ?: now()->toDateString();
             $v = $interesRecibido ?? $e->interesMes();
             $e->increment('meses_pagados');
             $e->pagos()->create([
-                'fecha' => now()->toDateString(),
+                'fecha' => $fecha,
                 'tipo' => 'interés',
                 'interes' => $v,
                 'abono' => 0,
@@ -106,21 +107,22 @@ class Ledger
             $n = $e->negocio;
             $n->increment('caja', $v);
             $n->increment('acum_interes', $v);
-            self::mov($n, "Interés empeño #{$e->numero}", $v);
+            self::mov($n, "Interés empeño #{$e->numero}", $v, $fecha);
         });
     }
 
     /** Abonar a capital (siempre pagando además el interés del mes). */
-    public static function abonar(Empeno $e, int $abono, ?int $interesRecibido = null): void
+    public static function abonar(Empeno $e, int $abono, ?int $interesRecibido = null, ?string $fecha = null): void
     {
-        DB::transaction(function () use ($e, $abono, $interesRecibido) {
+        DB::transaction(function () use ($e, $abono, $interesRecibido, $fecha) {
+            $fecha = $fecha ?: now()->toDateString();
             $abono = (int) min($abono, $e->saldo);
             $v = $interesRecibido ?? $e->interesMes();
 
             $e->increment('meses_pagados');
             $e->decrement('saldo', $abono);
             $e->pagos()->create([
-                'fecha' => now()->toDateString(),
+                'fecha' => $fecha,
                 'tipo' => 'interés + abono',
                 'interes' => $v,
                 'abono' => $abono,
@@ -130,7 +132,7 @@ class Ledger
             $n->increment('caja', $v + $abono);
             $n->decrement('prestado', $abono);
             $n->increment('acum_interes', $v);
-            self::mov($n, "Interés + abono empeño #{$e->numero}", $v + $abono);
+            self::mov($n, "Interés + abono empeño #{$e->numero}", $v + $abono, $fecha);
         });
     }
 
@@ -231,12 +233,12 @@ class Ledger
         });
     }
 
-    protected static function mov(Negocio $n, string $desc, int $monto): void
+    protected static function mov(Negocio $n, string $desc, int $monto, ?string $fecha = null): void
     {
         $n->movimientos()->create([
             'descripcion' => $desc,
             'monto' => $monto,
-            'fecha' => now()->toDateString(),
+            'fecha' => $fecha ?: now()->toDateString(),
         ]);
     }
 }

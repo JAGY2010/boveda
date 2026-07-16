@@ -118,13 +118,16 @@ class EmpenoController
         $this->guard($empeno);
         abort_if($empeno->estado !== 'activo', 422);
 
+        $r->validate(['fecha' => 'nullable|date|before_or_equal:today']);
+
         $abono = (int) $r->input('abono', 0);
         $interesRecibido = $r->filled('interes_recibido') ? (int) $r->input('interes_recibido') : null;
+        $fecha = $r->filled('fecha') ? $r->input('fecha') : null;
 
         if ($abono > 0) {
-            Ledger::abonar($empeno, $abono, $interesRecibido);
+            Ledger::abonar($empeno, $abono, $interesRecibido, $fecha);
         } else {
-            Ledger::pagarInteres($empeno, $interesRecibido);
+            Ledger::pagarInteres($empeno, $interesRecibido, $fecha);
         }
 
         $empeno->refresh();

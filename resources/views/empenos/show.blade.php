@@ -82,6 +82,11 @@
                                 <input type="text" inputmode="numeric" name="abono" placeholder="0" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                                 <p class="mt-1 text-xs text-zinc-400">Opcional: baja la deuda. Se paga junto con el interés.</p>
                             </div>
+                            <div>
+                                <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Fecha del pago</label>
+                                <input type="date" name="fecha" value="{{ now()->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                                <p class="mt-1 text-xs text-zinc-400">Hoy por defecto. Para registrar pagos de meses atrás, pon la fecha real en que pagó.</p>
+                            </div>
                             <button type="submit" class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Registrar pago · conserva el artículo</button>
                         </form>
                     </div>

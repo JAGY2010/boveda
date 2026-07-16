@@ -442,6 +442,18 @@ class SmokeTest extends TestCase
         $this->assertDatabaseHas('pagos', ['id' => $pago->id]);
     }
 
+    public function test_pago_con_fecha_pasada(): void
+    {
+        $dueno = $this->owner();
+        $empeno = Empeno::where('estado', 'activo')->firstOrFail();
+        $fecha = now()->subMonth()->toDateString();
+
+        $this->actingAs($dueno)->post("/empenos/{$empeno->id}/pago", ['fecha' => $fecha])->assertRedirect();
+
+        $pago = $empeno->pagos()->reorder('id', 'desc')->firstOrFail();
+        $this->assertEquals($fecha, $pago->fecha->toDateString());
+    }
+
     public function test_admin_sin_locales_va_al_panel(): void
     {
         // Producción recién desplegada: hay admin pero aún no hay locales.
