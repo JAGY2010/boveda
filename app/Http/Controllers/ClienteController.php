@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cliente;
 use Illuminate\Http\Request;
 
 class ClienteController
 {
+    private function guard(Cliente $cliente): void
+    {
+        abort_unless(in_array($cliente->negocio_id, auth()->user()->accessibleNegocioIds()), 403);
+    }
+
     public function index(Request $r)
     {
         $negocio = local();
@@ -40,10 +46,35 @@ class ClienteController
             'cedula' => 'nullable|string|max:50',
             'tel' => 'nullable|string|max:50',
             'direccion' => 'nullable|string|max:255',
+            'contacto2' => 'nullable|string|max:50',
         ]);
 
         local()->clientes()->create($data);
 
         return redirect()->route('clientes.index')->with('ok', 'Cliente guardado');
+    }
+
+    public function edit(Cliente $cliente)
+    {
+        $this->guard($cliente);
+
+        return view('clientes.edit', compact('cliente'));
+    }
+
+    public function update(Request $r, Cliente $cliente)
+    {
+        $this->guard($cliente);
+
+        $data = $r->validate([
+            'nombre' => 'required|string|max:255',
+            'cedula' => 'nullable|string|max:50',
+            'tel' => 'nullable|string|max:50',
+            'direccion' => 'nullable|string|max:255',
+            'contacto2' => 'nullable|string|max:50',
+        ]);
+
+        $cliente->update($data);
+
+        return redirect()->route('clientes.index')->with('ok', 'Cliente actualizado');
     }
 }

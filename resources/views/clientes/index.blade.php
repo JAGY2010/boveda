@@ -27,6 +27,7 @@
                         <th class="px-4 py-3 font-semibold">Celular</th>
                         <th class="px-4 py-3 font-semibold">Dirección</th>
                         <th class="px-4 py-3 text-right font-semibold">Empeños</th>
+                        <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -37,9 +38,12 @@
                             <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $c->tel }}</td>
                             <td class="px-4 py-3 text-zinc-400">{{ $c->direccion }}</td>
                             <td class="px-4 py-3 text-right tabular-nums">{{ $c->empenos_count }}</td>
+                            <td class="px-4 py-3 text-right">
+                                <a href="{{ route('clientes.edit', $c) }}" wire:navigate class="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">Editar</a>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-4 py-10 text-center text-zinc-400">{{ $q ? 'Sin resultados' : 'Aún no hay clientes' }}</td></tr>
+                        <tr><td colspan="6" class="px-4 py-10 text-center text-zinc-400">{{ $q ? 'Sin resultados' : 'Aún no hay clientes' }}</td></tr>
                     @endforelse
                 </tbody>
             </table>

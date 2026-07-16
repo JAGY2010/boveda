@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Cliente;
 use App\Models\Empeno;
 use App\Models\Negocio;
 use App\Models\User;
@@ -384,6 +385,23 @@ class SmokeTest extends TestCase
             'categoria' => 'Otro', 'principal' => 100000, 'pct' => 20, 'plazo' => 4,
             'inicio' => now()->addDay()->toDateString(),
         ])->assertSessionHasErrors('inicio');
+    }
+
+    public function test_editar_cliente_actualiza_contacto(): void
+    {
+        $dueno = $this->owner();
+        $cliente = Cliente::whereIn('negocio_id', $dueno->accessibleNegocioIds())->firstOrFail();
+
+        $this->actingAs($dueno)->get(route('clientes.edit', $cliente))->assertOk();
+        $this->actingAs($dueno)->put(route('clientes.update', $cliente), [
+            'nombre' => $cliente->nombre,
+            'tel' => '3209998877',
+            'contacto2' => '3111112222',
+        ])->assertRedirect(route('clientes.index'));
+
+        $fresh = $cliente->fresh();
+        $this->assertEquals('3209998877', $fresh->tel);
+        $this->assertEquals('3111112222', $fresh->contacto2);
     }
 
     public function test_admin_sin_locales_va_al_panel(): void

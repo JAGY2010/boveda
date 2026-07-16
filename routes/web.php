@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscrip
     Route::get('clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('clientes/nuevo', [ClienteController::class, 'create'])->name('clientes.create');
     Route::post('clientes', [ClienteController::class, 'store'])->name('clientes.store');
+    Route::get('clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
+    Route::put('clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
 
     Route::get('empenos', [EmpenoController::class, 'index'])->name('empenos.index');
     Route::get('empenos/nuevo', [EmpenoController::class, 'create'])->name('empenos.create');
