@@ -404,6 +404,44 @@ class SmokeTest extends TestCase
         $this->assertEquals('3111112222', $fresh->contacto2);
     }
 
+    public function test_owner_deshace_pago(): void
+    {
+        $dueno = $this->owner();
+        $empeno = Empeno::where('estado', 'activo')->firstOrFail();
+        $negocio = $empeno->negocio;
+        $mesesAntes = (int) $empeno->meses_pagados;
+        $saldoAntes = (int) $empeno->saldo;
+        $cajaAntes = (int) $negocio->caja;
+
+        // Pago con abono a capital
+        $this->actingAs($dueno)->post("/empenos/{$empeno->id}/pago", ['abono' => 10000])->assertRedirect();
+        $pago = $empeno->pagos()->reorder('id', 'desc')->firstOrFail();
+        $abono = (int) $pago->abono;
+        $this->assertEquals($saldoAntes - $abono, (int) $empeno->fresh()->saldo);
+
+        // Deshacer -> todo vuelve como estaba
+        $this->actingAs($dueno)->delete("/pagos/{$pago->id}")->assertRedirect();
+
+        $this->assertDatabaseMissing('pagos', ['id' => $pago->id]);
+        $this->assertEquals($mesesAntes, (int) $empeno->fresh()->meses_pagados);
+        $this->assertEquals($saldoAntes, (int) $empeno->fresh()->saldo);
+        $this->assertEquals($cajaAntes, (int) $negocio->fresh()->caja);
+    }
+
+    public function test_empleado_no_deshace_pago(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $dueno = User::where('email', 'dueno@boveda.test')->firstOrFail();
+        $empleado = User::where('email', 'empleado@boveda.test')->firstOrFail();
+        $empeno = Empeno::where('estado', 'activo')->firstOrFail();
+
+        $this->actingAs($dueno)->post("/empenos/{$empeno->id}/pago", [])->assertRedirect();
+        $pago = $empeno->pagos()->reorder('id', 'desc')->firstOrFail();
+
+        $this->actingAs($empleado)->delete("/pagos/{$pago->id}")->assertForbidden();
+        $this->assertDatabaseHas('pagos', ['id' => $pago->id]);
+    }
+
     public function test_admin_sin_locales_va_al_panel(): void
     {
         // Producción recién desplegada: hay admin pero aún no hay locales.

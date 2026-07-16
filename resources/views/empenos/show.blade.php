@@ -42,9 +42,18 @@
                     <p class="mb-3 text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Historial de pagos</p>
                     <ul class="divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
                         @forelse ($empeno->pagos as $p)
-                            <li class="flex justify-between py-2">
+                            <li class="flex items-center justify-between gap-3 py-2">
                                 <span class="text-zinc-500">{{ $p->fecha->format('d/m/Y') }} · {{ $p->tipo }}</span>
-                                <span class="font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">{{ cop($p->interes + $p->abono) }}</span>
+                                <div class="flex items-center gap-3">
+                                    <span class="font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">{{ cop($p->interes + $p->abono) }}</span>
+                                    @if ($activo && auth()->user()->puedeEditar())
+                                        <form method="POST" action="{{ route('pagos.deshacer', $p) }}" onsubmit="return confirm('¿Deshacer este pago? Se revierte el valor de caja y el mes que corrió.')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="rounded-md px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400" title="Deshacer este pago">↶ Deshacer</button>
+                                        </form>
+                                    @endif
+                                </div>
                             </li>
                         @empty
                             <li class="py-2 text-zinc-400">Sin pagos aún</li>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Empeno;
+use App\Models\Pago;
 use App\Support\Ledger;
 use Illuminate\Http\Request;
 
@@ -150,6 +151,19 @@ class EmpenoController
         Ledger::pasarAInventario($empeno);
 
         return redirect()->route('inventario.index')->with('ok', 'El artículo pasó a inventario para vender');
+    }
+
+    /** Deshacer un pago mal registrado (solo dueño/admin): revierte el valor y el mes. */
+    public function deshacerPago(Pago $pago)
+    {
+        $empeno = $pago->empeno;
+        $this->guard($empeno);
+        abort_unless(auth()->user()->puedeEditar(), 403);
+        abort_if($empeno->estado !== 'activo', 422);
+
+        Ledger::deshacerPago($pago);
+
+        return back()->with('ok', 'Pago deshecho · se revirtió el valor y el mes.');
     }
 
     /** Eliminar un empeño creado por error: solo el dueño; queda en el historial. */

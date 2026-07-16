@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Empeno;
 use App\Models\InventarioItem;
 use App\Models\Negocio;
+use App\Models\Pago;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -44,6 +45,32 @@ class Ledger
             self::mov($n, "Préstamo empeño #{$numero}", -$principal);
 
             return $empeno;
+        });
+    }
+
+    /** Deshacer un pago registrado por error: revierte el dinero, el saldo y el mes. */
+    public static function deshacerPago(Pago $pago): void
+    {
+        DB::transaction(function () use ($pago) {
+            $e = $pago->empeno;
+            $n = $e->negocio;
+            $interes = (int) $pago->interes;
+            $abono = (int) $pago->abono;
+
+            $n->decrement('caja', $interes + $abono);
+            if ($interes !== 0) {
+                $n->decrement('acum_interes', $interes);
+            }
+            if ($abono > 0) {
+                $n->increment('prestado', $abono);
+                $e->increment('saldo', $abono);
+            }
+            if ($e->meses_pagados > 0) {
+                $e->decrement('meses_pagados');
+            }
+            self::mov($n, "Reversa pago empeño #{$e->numero}", -($interes + $abono));
+
+            $pago->delete();
         });
     }
 
