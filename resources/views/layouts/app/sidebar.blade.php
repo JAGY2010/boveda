@@ -56,6 +56,9 @@
                         <flux:sidebar.item icon="user-plus" :href="route('equipo.index')" :current="request()->routeIs('equipo.*')" wire:navigate>
                             {{ __('Empleados') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="trash" :href="route('eliminaciones.index')" :current="request()->routeIs('eliminaciones.*')" wire:navigate>
+                            {{ __('Historial (eliminados)') }}
+                        </flux:sidebar.item>
                     @endif
                     @if (auth()->user()->puedeEditar())
                         <flux:sidebar.item icon="cog-6-tooth" :href="route('config.edit')" :current="request()->routeIs('config.*')" wire:navigate>

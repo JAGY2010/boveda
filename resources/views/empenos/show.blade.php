@@ -98,6 +98,19 @@
                             </form>
                         @endif
                     </div>
+
+                    @if (auth()->user()->puedeEditar() && $empeno->meses_pagados === 0)
+                        <div class="rounded-xl border border-red-500/40 bg-red-500/5 p-5 shadow-sm">
+                            <p class="mb-1 text-xs font-bold uppercase tracking-widest text-red-600 dark:text-red-400">Eliminar (creado por error)</p>
+                            <p class="mb-3 text-xs text-zinc-500">Solo el dueño. El capital vuelve a caja y queda en el historial. Disponible solo si el empeño no tiene pagos.</p>
+                            <form method="POST" action="{{ route('empenos.destroy', $empeno) }}" onsubmit="return confirm('¿Eliminar este empeño? El capital vuelve a caja y quedará registrado en el historial.')">
+                                @csrf
+                                @method('DELETE')
+                                <input name="motivo" placeholder="Motivo (opcional)" class="mb-2 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                                <button type="submit" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500">Eliminar empeño</button>
+                            </form>
+                        </div>
+                    @endif
                 @else
                     <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                         <p class="mb-2 text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Estado</p>

@@ -31,6 +31,7 @@ class Negocio extends Model
     public function inventario(): HasMany { return $this->hasMany(InventarioItem::class); }
     public function gastos(): HasMany { return $this->hasMany(Gasto::class); }
     public function movimientos(): HasMany { return $this->hasMany(Movimiento::class); }
+    public function eliminaciones(): HasMany { return $this->hasMany(Eliminacion::class); }
 
     // ---- Suscripción (estado calculado en vivo desde suscripcion_hasta + suspendido) ----
 

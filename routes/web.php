@@ -7,6 +7,7 @@ use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\ConsolidadoController;
 use App\Http\Controllers\ContabilidadController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EliminacionController;
 use App\Http\Controllers\EmpenoController;
 use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\InventarioController;
@@ -40,6 +41,10 @@ Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscrip
     Route::post('empenos/{empeno}/retirar', [EmpenoController::class, 'retirar'])->name('empenos.retirar');
     Route::post('empenos/{empeno}/perder', [EmpenoController::class, 'perder'])->name('empenos.perder');
     Route::get('empenos/{empeno}/contrato', [EmpenoController::class, 'contrato'])->name('empenos.contrato');
+    Route::delete('empenos/{empeno}', [EmpenoController::class, 'destroy'])->name('empenos.destroy');
+
+    // Historial de empeños eliminados (solo dueño/admin)
+    Route::get('eliminaciones', [EliminacionController::class, 'index'])->name('eliminaciones.index');
 
     Route::get('inventario', [InventarioController::class, 'index'])->name('inventario.index');
     Route::post('inventario/comprar', [InventarioController::class, 'comprar'])->name('inventario.comprar');

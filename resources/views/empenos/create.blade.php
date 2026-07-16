@@ -87,10 +87,17 @@
                         <input type="number" step="0.01" name="pct" value="{{ old('pct', $negocio->pct_default) }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                     </div>
                 </div>
-                <div>
-                    <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Plazo (meses)</label>
-                    <input type="number" name="plazo" value="{{ old('plazo', $negocio->plazo_default) }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div>
+                        <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Plazo (meses)</label>
+                        <input type="number" name="plazo" value="{{ old('plazo', $negocio->plazo_default) }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Fecha de inicio</label>
+                        <input type="date" name="inicio" value="{{ old('inicio', now()->format('Y-m-d')) }}" max="{{ now()->format('Y-m-d') }}" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                    </div>
                 </div>
+                <p class="-mt-2 text-xs text-zinc-400">La fecha de inicio es hoy por defecto. Para cargar un empeño antiguo, elige su fecha real (puede ser anterior).</p>
 
                 <div class="flex gap-3 pt-1">
                     <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Registrar empeño</button>

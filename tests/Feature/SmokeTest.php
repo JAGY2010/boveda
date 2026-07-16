@@ -319,6 +319,73 @@ class SmokeTest extends TestCase
         $this->assertEquals('activa', $n->estadoSuscripcion());
     }
 
+    public function test_owner_elimina_empeno_por_error(): void
+    {
+        $dueno = $this->owner();
+
+        $this->actingAs($dueno)->post('/empenos', [
+            'nuevo_nombre' => 'Error Cliente', 'nuevo_cedula' => '88888',
+            'categoria' => 'Otro', 'principal' => 300000, 'pct' => 20, 'plazo' => 4,
+        ])->assertRedirect();
+
+        $empeno = Empeno::where('principal', 300000)->latest('id')->firstOrFail();
+        $negocio = $empeno->negocio;
+        $cajaAntes = (int) $negocio->caja;
+
+        $this->actingAs($dueno)
+            ->delete("/empenos/{$empeno->id}", ['motivo' => 'creado por error'])
+            ->assertRedirect(route('empenos.index'));
+
+        $this->assertDatabaseMissing('empenos', ['id' => $empeno->id]);
+        $this->assertDatabaseHas('eliminaciones', ['numero' => $empeno->numero, 'motivo' => 'creado por error']);
+        $this->assertEquals($cajaAntes + 300000, (int) $negocio->fresh()->caja);
+    }
+
+    public function test_empleado_no_elimina_ni_ve_historial(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $empleado = User::where('email', 'empleado@boveda.test')->firstOrFail();
+        $empeno = Empeno::where('estado', 'activo')->firstOrFail();
+
+        $this->actingAs($empleado)->delete("/empenos/{$empeno->id}")->assertForbidden();
+        $this->actingAs($empleado)->get('/eliminaciones')->assertForbidden();
+        $this->assertDatabaseHas('empenos', ['id' => $empeno->id]);
+    }
+
+    public function test_no_elimina_empeno_con_pagos(): void
+    {
+        $dueno = $this->owner();
+        $empeno = Empeno::where('estado', 'activo')->firstOrFail();
+
+        $this->actingAs($dueno)->post("/empenos/{$empeno->id}/pago", [])->assertRedirect();
+        $this->actingAs($dueno)->delete("/empenos/{$empeno->id}")->assertRedirect();
+
+        $this->assertDatabaseHas('empenos', ['id' => $empeno->id]);
+        $this->actingAs($dueno)->get('/eliminaciones')->assertOk();
+    }
+
+    public function test_empeno_con_fecha_de_inicio_pasada(): void
+    {
+        $dueno = $this->owner();
+        $fecha = now()->subMonths(2)->toDateString();
+
+        $this->actingAs($dueno)->post('/empenos', [
+            'nuevo_nombre' => 'Antiguo', 'nuevo_cedula' => '77777',
+            'categoria' => 'Otro', 'principal' => 400000, 'pct' => 20, 'plazo' => 4,
+            'inicio' => $fecha,
+        ])->assertRedirect();
+
+        $e = Empeno::where('principal', 400000)->latest('id')->firstOrFail();
+        $this->assertEquals($fecha, $e->inicio->toDateString());
+
+        // Fecha futura -> rechazada.
+        $this->actingAs($dueno)->post('/empenos', [
+            'nuevo_nombre' => 'Futuro', 'nuevo_cedula' => '66666',
+            'categoria' => 'Otro', 'principal' => 100000, 'pct' => 20, 'plazo' => 4,
+            'inicio' => now()->addDay()->toDateString(),
+        ])->assertSessionHasErrors('inicio');
+    }
+
     public function test_admin_sin_locales_va_al_panel(): void
     {
         // Producción recién desplegada: hay admin pero aún no hay locales.

@@ -47,6 +47,22 @@ class Ledger
         });
     }
 
+    /** Anular un empeño creado por error (activo y sin pagos): el capital vuelve a caja. */
+    public static function anularEmpeno(Empeno $e): void
+    {
+        DB::transaction(function () use ($e) {
+            $n = $e->negocio;
+            $principal = (int) $e->principal;
+
+            $n->increment('caja', $principal);
+            $n->decrement('prestado', (int) $e->saldo);
+            self::mov($n, "Anulación empeño #{$e->numero}", $principal);
+
+            $e->pagos()->delete();
+            $e->delete();
+        });
+    }
+
     /** Pagar la cuota de interés del mes: corre el vencimiento +1 mes. */
     public static function pagarInteres(Empeno $e, ?int $interesRecibido = null): void
     {

@@ -59,6 +59,7 @@ class EmpenoController
             'principal' => 'required|integer|min:1',
             'pct' => 'required|numeric|min:0',
             'plazo' => 'required|integer|min:1',
+            'inicio' => 'nullable|date|before_or_equal:today',
             'atributos' => 'nullable|array',
         ]);
 
@@ -97,6 +98,7 @@ class EmpenoController
             'principal' => (int) $data['principal'],
             'pct' => $data['pct'],
             'plazo' => (int) $data['plazo'],
+            'inicio' => $data['inicio'] ?? null,
         ]);
 
         return redirect()->route('empenos.show', $empeno)->with('ok', 'Empeño registrado');
@@ -148,6 +150,32 @@ class EmpenoController
         Ledger::pasarAInventario($empeno);
 
         return redirect()->route('inventario.index')->with('ok', 'El artículo pasó a inventario para vender');
+    }
+
+    /** Eliminar un empeño creado por error: solo el dueño; queda en el historial. */
+    public function destroy(Request $r, Empeno $empeno)
+    {
+        $this->guard($empeno);
+        abort_unless(auth()->user()->puedeEditar(), 403);
+
+        if ($empeno->estado !== 'activo' || $empeno->meses_pagados > 0 || $empeno->pagos()->exists()) {
+            return back()->with('error', 'Solo se pueden eliminar empeños activos y sin pagos registrados.');
+        }
+
+        $empeno->negocio->eliminaciones()->create([
+            'user_id' => auth()->id(),
+            'user_name' => auth()->user()->name,
+            'numero' => $empeno->numero,
+            'cliente_nombre' => optional($empeno->cliente)->nombre,
+            'articulo' => $empeno->articulo,
+            'principal' => (int) $empeno->principal,
+            'inicio' => $empeno->inicio,
+            'motivo' => $r->input('motivo'),
+        ]);
+
+        Ledger::anularEmpeno($empeno);
+
+        return redirect()->route('empenos.index')->with('ok', 'Empeño eliminado · el capital volvió a caja.');
     }
 
     public function contrato(Empeno $empeno)
