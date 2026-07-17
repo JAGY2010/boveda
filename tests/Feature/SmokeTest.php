@@ -469,6 +469,33 @@ class SmokeTest extends TestCase
         $this->assertStringStartsWith('data:image/', (string) $negocio->fresh()->logo_data);
     }
 
+    public function test_empeno_con_numero_manual(): void
+    {
+        $dueno = $this->owner();
+
+        // Migrar un empeño viejo con su número de contrato real
+        $this->actingAs($dueno)->post('/empenos', [
+            'nuevo_nombre' => 'Viejo', 'nuevo_cedula' => '55555',
+            'categoria' => 'Otro', 'principal' => 100000, 'pct' => 20, 'plazo' => 4,
+            'numero' => 9999,
+        ])->assertRedirect();
+        $this->assertDatabaseHas('empenos', ['numero' => 9999, 'principal' => 100000]);
+
+        // Uno nuevo sin número -> continúa desde el más alto (10000)
+        $this->actingAs($dueno)->post('/empenos', [
+            'nuevo_nombre' => 'Nuevo', 'nuevo_cedula' => '55556',
+            'categoria' => 'Otro', 'principal' => 200000, 'pct' => 20, 'plazo' => 4,
+        ])->assertRedirect();
+        $this->assertDatabaseHas('empenos', ['numero' => 10000, 'principal' => 200000]);
+
+        // Número repetido -> rechazado
+        $this->actingAs($dueno)->post('/empenos', [
+            'nuevo_nombre' => 'Repetido', 'nuevo_cedula' => '55557',
+            'categoria' => 'Otro', 'principal' => 300000, 'pct' => 20, 'plazo' => 4,
+            'numero' => 9999,
+        ])->assertSessionHasErrors('numero');
+    }
+
     public function test_admin_sin_locales_va_al_panel(): void
     {
         // Producción recién desplegada: hay admin pero aún no hay locales.

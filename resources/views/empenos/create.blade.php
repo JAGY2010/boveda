@@ -98,6 +98,11 @@
                     </div>
                 </div>
                 <p class="-mt-2 text-xs text-zinc-400">La fecha de inicio es hoy por defecto. Para cargar un empeño antiguo, elige su fecha real (puede ser anterior).</p>
+                <div>
+                    <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Número de contrato (consecutivo)</label>
+                    <input type="number" name="numero" value="{{ old('numero') }}" placeholder="Automático · siguiente {{ $proximoNumero }}" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                    <p class="mt-1 text-xs text-zinc-400">Déjalo <b>vacío</b> para el número automático (siguiente: {{ $proximoNumero }}). Para un empeño antiguo, escribe su número de contrato real.</p>
+                </div>
 
                 <div class="flex gap-3 pt-1">
                     <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Registrar empeño</button>

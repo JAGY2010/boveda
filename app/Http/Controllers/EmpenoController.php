@@ -37,8 +37,9 @@ class EmpenoController
     {
         $negocio = local();
         $clientes = $negocio->clientes()->orderBy('nombre')->get();
+        $proximoNumero = max((int) ($negocio->empenos()->max('numero') ?? 0), (int) $negocio->consecutivo_inicial - 1) + 1;
 
-        return view('empenos.create', compact('negocio', 'clientes'));
+        return view('empenos.create', compact('negocio', 'clientes', 'proximoNumero'));
     }
 
     public function store(Request $r)
@@ -61,7 +62,10 @@ class EmpenoController
             'pct' => 'required|numeric|min:0',
             'plazo' => 'required|integer|min:1',
             'inicio' => 'nullable|date|before_or_equal:today',
+            'numero' => ['nullable', 'integer', 'min:1', \Illuminate\Validation\Rule::unique('empenos')->where(fn ($q) => $q->where('negocio_id', $negocio->id))],
             'atributos' => 'nullable|array',
+        ], [
+            'numero.unique' => 'Ese número de contrato ya existe en este local.',
         ]);
 
         if ($r->filled('nuevo_nombre')) {
@@ -100,6 +104,7 @@ class EmpenoController
             'pct' => $data['pct'],
             'plazo' => (int) $data['plazo'],
             'inicio' => $data['inicio'] ?? null,
+            'numero' => $data['numero'] ?? null,
         ]);
 
         return redirect()->route('empenos.show', $empeno)->with('ok', 'Empeño registrado');

@@ -19,7 +19,10 @@ class Ledger
     public static function crearEmpeno(Negocio $n, int $clienteId, array $data): Empeno
     {
         return DB::transaction(function () use ($n, $clienteId, $data) {
-            $numero = max((int) ($n->empenos()->max('numero') ?? 0), (int) $n->consecutivo_inicial - 1) + 1;
+            // Número dado a mano (migración de empeños viejos) o el siguiente automático.
+            $numero = ! empty($data['numero'])
+                ? (int) $data['numero']
+                : max((int) ($n->empenos()->max('numero') ?? 0), (int) $n->consecutivo_inicial - 1) + 1;
             $principal = (int) $data['principal'];
 
             $empeno = $n->empenos()->create([
