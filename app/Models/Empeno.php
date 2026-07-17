@@ -34,10 +34,10 @@ class Empeno extends Model
 
     // ---- Lógica del empeño (validada en el prototipo) ----
 
-    /** Interés de un mes = % sobre el saldo actual. */
+    /** Interés de un mes = % sobre el saldo actual (redondeado al cien). */
     public function interesMes(): int
     {
-        return (int) round($this->saldo * $this->pct / 100);
+        return redondearCien($this->saldo * $this->pct / 100);
     }
 
     /** Vencimiento = inicio + plazo + (nº de cuotas de interés pagadas). */
@@ -52,7 +52,7 @@ class Empeno extends Model
         return $this->inicio->copy()->addMonthsNoOverflow($this->meses_pagados);
     }
 
-    /** Interés corrido por CUARTOS de mes desde la última cuota cubierta (cada cuarto = 1/4 del interés mensual). */
+    /** Interés corrido POR DÍA exacto desde la última cuota cubierta, redondeado al cien más cercano. */
     public function interesCorrido(): int
     {
         // Días completos transcurridos (el mismo día no cobra nada).
@@ -61,10 +61,8 @@ class Empeno extends Model
             return 0;
         }
 
-        // El mes se divide en 4 cuartos (7.5 días c/u); se cobra por cuarto o fracción.
-        $cuartos = (int) ceil($dias / 7.5);
-
-        return (int) round($this->interesMes() * $cuartos / 4);
+        // Interés por día = cuota mensual / 30 × días. Sigue corriendo más allá de un mes.
+        return redondearCien($this->interesMes() * $dias / 30);
     }
 
     /** Cuánto debe hoy para retirar = saldo + interés corrido. */

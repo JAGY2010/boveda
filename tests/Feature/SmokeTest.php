@@ -183,7 +183,7 @@ class SmokeTest extends TestCase
         $this->assertDatabaseHas('negocios', ['nombre' => 'La Playita Editada', 'nit' => '999-9', 'representante' => 'Nuevo Rep']);
     }
 
-    public function test_interes_corrido_por_cuartos(): void
+    public function test_interes_corrido_por_dia(): void
     {
         $this->seed(DatabaseSeeder::class);
         $e = Empeno::where('estado', 'activo')->firstOrFail();
@@ -192,20 +192,35 @@ class SmokeTest extends TestCase
 
         $this->assertEquals(80000, $e->interesMes());
 
-        // [días transcurridos => interés corrido esperado]
+        // [días, interés esperado] — por día (cuota/30 × días) redondeado al cien.
         $casos = [
-            [0, 0],        // mismo día: nada
-            [5, 20000],    // 1er cuarto (mitad de la mitad)
-            [15, 40000],   // mitad de mes
-            [20, 60000],   // 3er cuarto
+            [0, 0],
+            [5, 13300],    // 13333.33 -> 13300 (redondea abajo)
+            [10, 26700],   // 26666.67 -> 26700 (redondea arriba)
+            [15, 40000],   // 40000 exacto
             [30, 80000],   // mes completo
-            [45, 120000],  // más de un mes: sigue corriendo
+            [45, 120000],  // mes y medio, sigue corriendo
         ];
 
         foreach ($casos as [$dias, $esperado]) {
             $e->inicio = now()->subDays($dias);
             $this->assertEquals($esperado, $e->interesCorrido(), "a los {$dias} días");
         }
+
+        // Caso real del cliente: saldo 13.6M al 4%, 17 días -> 308.300.
+        $e->update(['saldo' => 13600000, 'pct' => 4, 'meses_pagados' => 0]);
+        $e->refresh();
+        $e->inicio = now()->subDays(17);
+        $this->assertEquals(544000, $e->interesMes());
+        $this->assertEquals(308300, $e->interesCorrido());
+    }
+
+    public function test_redondear_cien(): void
+    {
+        $this->assertEquals(308300, redondearCien(308266.67));
+        $this->assertEquals(308200, redondearCien(308245));
+        $this->assertEquals(308300, redondearCien(308250)); // 50 -> arriba
+        $this->assertEquals(0, redondearCien(0));
     }
 
     public function test_pago_con_interes_recibido_distinto(): void

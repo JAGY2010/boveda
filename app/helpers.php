@@ -10,6 +10,14 @@ if (! function_exists('cop')) {
     }
 }
 
+if (! function_exists('redondearCien')) {
+    /** Redondea al cien más cercano (49 abajo, 50 arriba). Ej: 308266 -> 308300; 308245 -> 308200. */
+    function redondearCien($n): int
+    {
+        return (int) (round(((float) $n) / 100) * 100);
+    }
+}
+
 if (! function_exists('numeroALetras')) {
     /**
      * Convierte un entero a palabras en español (sin depender de la extensión intl).
