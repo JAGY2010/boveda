@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscrip
     Route::post('empenos/{empeno}/perder', [EmpenoController::class, 'perder'])->name('empenos.perder');
     Route::get('empenos/{empeno}/contrato', [EmpenoController::class, 'contrato'])->name('empenos.contrato');
     Route::delete('empenos/{empeno}', [EmpenoController::class, 'destroy'])->name('empenos.destroy');
+    Route::put('empenos/{empeno}/datos', [EmpenoController::class, 'actualizarDatos'])->name('empenos.datos');
     Route::delete('pagos/{pago}', [EmpenoController::class, 'deshacerPago'])->name('pagos.deshacer');
 
     // Historial de empeños eliminados (solo dueño/admin)

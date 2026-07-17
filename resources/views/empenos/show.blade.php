@@ -60,6 +60,28 @@
                         @endforelse
                     </ul>
                 </div>
+
+                @if ($activo && auth()->user()->puedeEditar())
+                    <details class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+                        <summary class="cursor-pointer list-none text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Editar número de contrato / fecha de inicio</summary>
+                        <p class="mb-3 mt-2 text-xs text-zinc-400">Útil para corregir empeños migrados. Solo el dueño.</p>
+                        <form method="POST" action="{{ route('empenos.datos', $empeno) }}" class="grid gap-3 sm:grid-cols-2">
+                            @csrf
+                            @method('PUT')
+                            <div>
+                                <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Número de contrato</label>
+                                <input type="number" name="numero" value="{{ $empeno->numero }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Fecha de inicio</label>
+                                <input type="date" name="inicio" value="{{ $empeno->inicio->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            </div>
+                            <div class="sm:col-span-2">
+                                <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Guardar datos</button>
+                            </div>
+                        </form>
+                    </details>
+                @endif
             </div>
 
             <div class="space-y-4">
@@ -119,16 +141,20 @@
                         @endif
                     </div>
 
-                    @if (auth()->user()->puedeEditar() && $empeno->meses_pagados === 0)
+                    @if (auth()->user()->puedeEditar())
                         <div class="rounded-xl border border-red-500/40 bg-red-500/5 p-5 shadow-sm">
                             <p class="mb-1 text-xs font-bold uppercase tracking-widest text-red-600 dark:text-red-400">Eliminar (creado por error)</p>
-                            <p class="mb-3 text-xs text-zinc-500">Solo el dueño. El capital vuelve a caja y queda en el historial. Disponible solo si el empeño no tiene pagos.</p>
-                            <form method="POST" action="{{ route('empenos.destroy', $empeno) }}" onsubmit="return confirm('¿Eliminar este empeño? El capital vuelve a caja y quedará registrado en el historial.')">
-                                @csrf
-                                @method('DELETE')
-                                <input name="motivo" placeholder="Motivo (opcional)" class="mb-2 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
-                                <button type="submit" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500">Eliminar empeño</button>
-                            </form>
+                            @if ($empeno->meses_pagados === 0)
+                                <p class="mb-3 text-xs text-zinc-500">Solo el dueño. El capital vuelve a caja y queda en el historial.</p>
+                                <form method="POST" action="{{ route('empenos.destroy', $empeno) }}" onsubmit="return confirm('¿Eliminar este empeño? El capital vuelve a caja y quedará registrado en el historial.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input name="motivo" placeholder="Motivo (opcional)" class="mb-2 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                                    <button type="submit" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500">Eliminar empeño</button>
+                                </form>
+                            @else
+                                <p class="text-xs text-zinc-500">Este empeño tiene <b>{{ $empeno->meses_pagados }} pago(s)</b> registrados. Como filtro de seguridad, primero <b>deshaz todos sus pagos</b> (arriba, en “Historial de pagos”, botón <span class="text-red-600">↶ Deshacer</span>). Cuando no quede ningún pago, aquí aparecerá el botón para eliminarlo.</p>
+                            @endif
                         </div>
                     @endif
                 @else

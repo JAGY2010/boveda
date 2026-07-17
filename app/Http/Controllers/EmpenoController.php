@@ -161,6 +161,27 @@ class EmpenoController
         return redirect()->route('inventario.index')->with('ok', 'El artículo pasó a inventario para vender');
     }
 
+    /** Editar el número de contrato y la fecha de inicio (para corregir migraciones). Solo dueño/admin. */
+    public function actualizarDatos(Request $r, Empeno $empeno)
+    {
+        $this->guard($empeno);
+        abort_unless(auth()->user()->puedeEditar(), 403);
+
+        $data = $r->validate([
+            'numero' => ['required', 'integer', 'min:1', \Illuminate\Validation\Rule::unique('empenos')->where(fn ($q) => $q->where('negocio_id', $empeno->negocio_id))->ignore($empeno->id)],
+            'inicio' => ['required', 'date', 'before_or_equal:today'],
+        ], [
+            'numero.unique' => 'Ese número de contrato ya existe en este local.',
+        ]);
+
+        $empeno->update([
+            'numero' => (int) $data['numero'],
+            'inicio' => $data['inicio'],
+        ]);
+
+        return back()->with('ok', 'Datos del empeño actualizados.');
+    }
+
     /** Deshacer un pago mal registrado (solo dueño/admin): revierte el valor y el mes. */
     public function deshacerPago(Pago $pago)
     {

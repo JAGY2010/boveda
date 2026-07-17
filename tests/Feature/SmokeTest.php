@@ -496,6 +496,28 @@ class SmokeTest extends TestCase
         ])->assertSessionHasErrors('numero');
     }
 
+    public function test_owner_edita_numero_y_fecha_del_empeno(): void
+    {
+        $dueno = $this->owner();
+        $empleado = User::where('email', 'empleado@boveda.test')->firstOrFail();
+        $empeno = Empeno::where('estado', 'activo')->firstOrFail();
+        $nuevaFecha = now()->subMonths(3)->toDateString();
+
+        // El empleado no puede editar el número/fecha
+        $this->actingAs($empleado)->put("/empenos/{$empeno->id}/datos", [
+            'numero' => 77, 'inicio' => $nuevaFecha,
+        ])->assertForbidden();
+
+        // El dueño sí
+        $this->actingAs($dueno)->put("/empenos/{$empeno->id}/datos", [
+            'numero' => 88888, 'inicio' => $nuevaFecha,
+        ])->assertRedirect();
+
+        $empeno->refresh();
+        $this->assertEquals(88888, (int) $empeno->numero);
+        $this->assertEquals($nuevaFecha, $empeno->inicio->toDateString());
+    }
+
     public function test_admin_sin_locales_va_al_panel(): void
     {
         // Producción recién desplegada: hay admin pero aún no hay locales.
