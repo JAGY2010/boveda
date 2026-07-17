@@ -44,7 +44,7 @@ class SmokeTest extends TestCase
         $rutas = [
             '/dashboard', '/clientes', '/clientes/nuevo',
             '/empenos', '/empenos/nuevo', "/empenos/{$id}", "/empenos/{$id}/contrato",
-            '/inventario', '/contabilidad', '/configuracion', '/equipo', '/consolidado',
+            '/inventario', '/contabilidad', '/reporte', '/configuracion', '/equipo', '/consolidado',
         ];
 
         foreach ($rutas as $ruta) {
@@ -508,14 +508,48 @@ class SmokeTest extends TestCase
             'numero' => 77, 'inicio' => $nuevaFecha,
         ])->assertForbidden();
 
-        // El dueño sí
+        // El dueño sí (número, fecha y datos del artículo)
         $this->actingAs($dueno)->put("/empenos/{$empeno->id}/datos", [
             'numero' => 88888, 'inicio' => $nuevaFecha,
+            'articulo' => 'Moto Editada', 'serial' => 'ABC123', 'color' => 'Rojo', 'observaciones' => 'buen estado',
         ])->assertRedirect();
 
         $empeno->refresh();
         $this->assertEquals(88888, (int) $empeno->numero);
         $this->assertEquals($nuevaFecha, $empeno->inicio->toDateString());
+        $this->assertEquals('Moto Editada', $empeno->articulo);
+        $this->assertEquals('Rojo', $empeno->color);
+    }
+
+    public function test_reporte_solo_dueno(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $dueno = User::where('email', 'dueno@boveda.test')->firstOrFail();
+        $empleado = User::where('email', 'empleado@boveda.test')->firstOrFail();
+
+        $this->actingAs($dueno)->get('/reporte')->assertOk();
+        $this->actingAs($dueno)->get('/reporte?periodo=mes')->assertOk();
+        $this->actingAs($empleado)->get('/reporte')->assertForbidden();
+    }
+
+    public function test_filtro_empenos_por_estado(): void
+    {
+        $this->actingAs($this->owner());
+
+        foreach (['activos', 'mora', 'perder', 'cerrados', 'todos'] as $e) {
+            $this->get("/empenos?estado={$e}")->assertOk();
+        }
+    }
+
+    public function test_recibo_de_pago_carga(): void
+    {
+        $dueno = $this->owner();
+        $empeno = Empeno::where('estado', 'activo')->firstOrFail();
+
+        $this->actingAs($dueno)->post("/empenos/{$empeno->id}/pago", [])->assertRedirect();
+        $pago = $empeno->pagos()->reorder('id', 'desc')->firstOrFail();
+
+        $this->actingAs($dueno)->get("/pagos/{$pago->id}/recibo")->assertOk();
     }
 
     public function test_admin_sin_locales_va_al_panel(): void

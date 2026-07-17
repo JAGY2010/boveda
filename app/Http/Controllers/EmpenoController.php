@@ -13,8 +13,9 @@ class EmpenoController
     {
         $negocio = local();
         $q = trim((string) $r->query('q', ''));
+        $estado = $r->query('estado', 'activos');
 
-        $empenos = $negocio->empenos()
+        $base = $negocio->empenos()
             ->with('cliente')
             ->orderByDesc('id')
             ->when($q !== '', function ($query) use ($q) {
@@ -30,7 +31,23 @@ class EmpenoController
             })
             ->get();
 
-        return view('empenos.index', compact('empenos', 'q'));
+        $counts = [
+            'activos' => $base->where('estado', 'activo')->count(),
+            'mora' => $base->filter(fn ($e) => $e->estadoCalculado() === 'en mora')->count(),
+            'perder' => $base->filter(fn ($e) => $e->estadoCalculado() === 'por perder')->count(),
+            'cerrados' => $base->whereIn('estado', ['retirado', 'perdido'])->count(),
+            'todos' => $base->count(),
+        ];
+
+        $empenos = match ($estado) {
+            'mora' => $base->filter(fn ($e) => $e->estadoCalculado() === 'en mora')->values(),
+            'perder' => $base->filter(fn ($e) => $e->estadoCalculado() === 'por perder')->values(),
+            'cerrados' => $base->whereIn('estado', ['retirado', 'perdido'])->values(),
+            'todos' => $base,
+            default => $base->where('estado', 'activo')->values(),
+        };
+
+        return view('empenos.index', compact('empenos', 'q', 'estado', 'counts'));
     }
 
     public function create()
@@ -170,6 +187,10 @@ class EmpenoController
         $data = $r->validate([
             'numero' => ['required', 'integer', 'min:1', \Illuminate\Validation\Rule::unique('empenos')->where(fn ($q) => $q->where('negocio_id', $empeno->negocio_id))->ignore($empeno->id)],
             'inicio' => ['required', 'date', 'before_or_equal:today'],
+            'articulo' => 'required|string|max:255',
+            'serial' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:100',
+            'observaciones' => 'nullable|string|max:255',
         ], [
             'numero.unique' => 'Ese número de contrato ya existe en este local.',
         ]);
@@ -177,6 +198,10 @@ class EmpenoController
         $empeno->update([
             'numero' => (int) $data['numero'],
             'inicio' => $data['inicio'],
+            'articulo' => $data['articulo'],
+            'serial' => $data['serial'] ?? null,
+            'color' => $data['color'] ?? null,
+            'observaciones' => $data['observaciones'] ?? null,
         ]);
 
         return back()->with('ok', 'Datos del empeño actualizados.');
@@ -227,6 +252,16 @@ class EmpenoController
         $empeno->load('cliente', 'negocio', 'pagos');
 
         return view('empenos.contrato', compact('empeno'));
+    }
+
+    /** Recibo imprimible de un pago (comprobante para el cliente). */
+    public function recibo(Pago $pago)
+    {
+        $empeno = $pago->empeno;
+        $this->guard($empeno);
+        $empeno->load('cliente', 'negocio');
+
+        return view('pagos.recibo', compact('pago', 'empeno'));
     }
 
     private function guard(Empeno $empeno): void

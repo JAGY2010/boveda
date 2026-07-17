@@ -33,12 +33,20 @@
             </div>
         @endif
 
-        @if ($porPerder->count())
-            <div class="mt-4 flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700 dark:text-red-300">
-                <span>⚠</span>
-                <span>{{ $porPerder->count() }} empeño(s) llegaron a los {{ $negocio->plazo_default }} meses sin pagar — puedes disponer del artículo.</span>
-            </div>
-        @endif
+        <div class="mt-4 grid gap-3 sm:grid-cols-3">
+            <a href="{{ route('empenos.index', ['estado' => 'activos']) }}" wire:navigate class="rounded-xl border border-sky-500/40 bg-sky-500/10 px-4 py-3 transition hover:bg-sky-500/20">
+                <div class="text-2xl font-semibold tabular-nums text-sky-700 dark:text-sky-300">{{ $venceSemana }}</div>
+                <div class="text-xs font-semibold text-sky-700 dark:text-sky-300">Vencen esta semana · avisar</div>
+            </a>
+            <a href="{{ route('empenos.index', ['estado' => 'mora']) }}" wire:navigate class="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 transition hover:bg-amber-500/20">
+                <div class="text-2xl font-semibold tabular-nums text-amber-700 dark:text-amber-400">{{ $enMora }}</div>
+                <div class="text-xs font-semibold text-amber-700 dark:text-amber-400">En mora</div>
+            </a>
+            <a href="{{ route('empenos.index', ['estado' => 'perder']) }}" wire:navigate class="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 transition hover:bg-red-500/20">
+                <div class="text-2xl font-semibold tabular-nums text-red-700 dark:text-red-300">{{ $porPerder->count() }}</div>
+                <div class="text-xs font-semibold text-red-700 dark:text-red-300">Por perder · dispones del artículo</div>
+            </a>
+        </div>
 
         <div class="mt-6 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <p class="mb-3 text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Próximos vencimientos</p>

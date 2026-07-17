@@ -21,12 +21,14 @@ class DashboardController
 
         $porPerder = $activos->filter(fn ($e) => $e->mesesSinPagar() >= $e->plazo)->values();
 
+        $enMora = $activos->filter(fn ($e) => $e->estadoCalculado() === 'en mora')->count();
+
         $venceSemana = $activos->filter(function ($e) {
             $d = now()->startOfDay()->diffInDays($e->vencimiento(), false);
 
             return $d >= 0 && $d <= 7;
         })->count();
 
-        return view('dashboard', compact('negocio', 'activos', 'proximos', 'porPerder', 'venceSemana'));
+        return view('dashboard', compact('negocio', 'activos', 'proximos', 'porPerder', 'enMora', 'venceSemana'));
     }
 }

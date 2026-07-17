@@ -16,14 +16,8 @@
         $serie = trim($serie.($serie ? ' · ' : '').$empeno->serial);
     }
 
-    // Nombre del artículo sin repetir año/placa/imei (que ya tienen su propio campo).
+    // Nombre del artículo (editable): se usa el guardado directamente.
     $nombreArticulo = $empeno->articulo;
-    if (! empty($attrs)) {
-        $limpio = collect($attrs)->except(['anio', 'placa', 'imei'])->filter(fn ($v) => $v !== null && $v !== '')->implode(' ');
-        if ($limpio !== '') {
-            $nombreArticulo = trim($empeno->categoria.' '.$limpio);
-        }
-    }
 
     $im = (int) round($empeno->principal * $empeno->pct / 100); // interés mensual del contrato
 

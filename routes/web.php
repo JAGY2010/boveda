@@ -12,6 +12,7 @@ use App\Http\Controllers\EmpenoController;
 use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LocalController;
+use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\SuscripcionController;
 use App\Http\Middleware\CompartirLocales;
 use App\Http\Middleware\VerificarSuscripcion;
@@ -46,6 +47,7 @@ Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscrip
     Route::delete('empenos/{empeno}', [EmpenoController::class, 'destroy'])->name('empenos.destroy');
     Route::put('empenos/{empeno}/datos', [EmpenoController::class, 'actualizarDatos'])->name('empenos.datos');
     Route::delete('pagos/{pago}', [EmpenoController::class, 'deshacerPago'])->name('pagos.deshacer');
+    Route::get('pagos/{pago}/recibo', [EmpenoController::class, 'recibo'])->name('pagos.recibo');
 
     // Historial de empeños eliminados (solo dueño/admin)
     Route::get('eliminaciones', [EliminacionController::class, 'index'])->name('eliminaciones.index');
@@ -57,6 +59,8 @@ Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscrip
     Route::get('contabilidad', [ContabilidadController::class, 'index'])->name('contabilidad.index');
     Route::post('contabilidad/capital', [ContabilidadController::class, 'capital'])->name('contabilidad.capital');
     Route::post('contabilidad/gasto', [ContabilidadController::class, 'gasto'])->name('contabilidad.gasto');
+
+    Route::get('reporte', [ReporteController::class, 'index'])->name('reporte.index');
 
     Route::get('configuracion', [ConfiguracionController::class, 'edit'])->name('config.edit');
     Route::put('configuracion', [ConfiguracionController::class, 'update'])->name('config.update');

@@ -46,6 +46,7 @@
                                 <span class="text-zinc-500">{{ $p->fecha->format('d/m/Y') }} · {{ $p->tipo }}</span>
                                 <div class="flex items-center gap-3">
                                     <span class="font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">{{ cop($p->interes + $p->abono) }}</span>
+                                    <a href="{{ route('pagos.recibo', $p) }}" target="_blank" class="rounded-md px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400" title="Recibo del pago">🧾 Recibo</a>
                                     @if ($activo && auth()->user()->puedeEditar())
                                         <form method="POST" action="{{ route('pagos.deshacer', $p) }}" onsubmit="return confirm('¿Deshacer este pago? Se revierte el valor de caja y el mes que corrió.')">
                                             @csrf
@@ -63,8 +64,8 @@
 
                 @if ($activo && auth()->user()->puedeEditar())
                     <details class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                        <summary class="cursor-pointer list-none text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Editar número de contrato / fecha de inicio</summary>
-                        <p class="mb-3 mt-2 text-xs text-zinc-400">Útil para corregir empeños migrados. Solo el dueño.</p>
+                        <summary class="cursor-pointer list-none text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Editar empeño (número, fecha, artículo)</summary>
+                        <p class="mb-3 mt-2 text-xs text-zinc-400">Para corregir datos (útil en migraciones). Solo el dueño.</p>
                         <form method="POST" action="{{ route('empenos.datos', $empeno) }}" class="grid gap-3 sm:grid-cols-2">
                             @csrf
                             @method('PUT')
@@ -75,6 +76,22 @@
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Fecha de inicio</label>
                                 <input type="date" name="inicio" value="{{ $empeno->inicio->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Artículo</label>
+                                <input name="articulo" value="{{ $empeno->articulo }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Serial / IMEI / Motor</label>
+                                <input name="serial" value="{{ $empeno->serial }}" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Color</label>
+                                <input name="color" value="{{ $empeno->color }}" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Estado / observaciones</label>
+                                <input name="observaciones" value="{{ $empeno->observaciones }}" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                             </div>
                             <div class="sm:col-span-2">
                                 <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Guardar datos</button>
