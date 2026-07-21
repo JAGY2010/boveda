@@ -70,6 +70,7 @@ class LocalController
             'pct_default' => $data['pct_default'],
             'ltv_default' => $data['ltv_default'],
             'sms_activo' => true,
+            'periodo' => 'diario',
             'caja' => (int) $data['caja_inicial'],
             'consecutivo_inicial' => (int) $data['consecutivo_inicial'],
             'suscripcion_hasta' => now()->addDays(30), // 30 días de prueba

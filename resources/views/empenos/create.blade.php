@@ -83,13 +83,13 @@
                         <input type="text" inputmode="numeric" name="principal" id="e_val" value="{{ old('principal') }}" required class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Interés por {{ periodoLabel($negocio->periodo) }} (%)</label>
+                        <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Interés mensual (%)</label>
                         <input type="number" step="0.01" name="pct" value="{{ old('pct', $negocio->pct_default) }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                     </div>
                 </div>
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div>
-                        <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Plazo (en {{ periodoLabelPlural($negocio->periodo) }})</label>
+                        <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Plazo (meses)</label>
                         <input type="number" name="plazo" value="{{ old('plazo', $negocio->plazo_default) }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                     </div>
                     <div>
@@ -114,9 +114,9 @@
                 <p class="mb-3 text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Cómo funcionará</p>
                 <ul class="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
                     <li>Sale de <b>Caja</b> el valor prestado.</li>
-                    <li>Cada {{ periodoLabel($negocio->periodo) }} genera el interés (tu ganancia).</li>
-                    <li>Cada cuota pagada corre el vencimiento <b>+1 {{ periodoLabel($negocio->periodo) }}</b>.</li>
-                    <li>A las {{ $negocio->plazo_default }} {{ periodoLabelPlural($negocio->periodo) }} sin pagar, el artículo es tuyo.</li>
+                    <li>Cada mes genera el interés (tu ganancia).</li>
+                    <li>Cada cuota pagada corre el vencimiento <b>+1 mes</b>.</li>
+                    <li>A los {{ $negocio->plazo_default }} meses sin pagar, el artículo es tuyo.</li>
                 </ul>
                 <div class="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/60">
                     ¿No aparece en la lista? En cualquier campo elige <b>“✏️ Otra (escribir)”</b> y escríbelo a mano.

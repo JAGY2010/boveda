@@ -187,7 +187,7 @@ class SmokeTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
         $e = Empeno::where('estado', 'activo')->firstOrFail();
-        $e->update(['saldo' => 1000000, 'pct' => 8, 'meses_pagados' => 0]);
+        $e->update(['saldo' => 1000000, 'pct' => 8, 'meses_pagados' => 0, 'periodo' => 'diario']);
         $e->refresh();
 
         $this->assertEquals(80000, $e->interesMes());
@@ -215,23 +215,39 @@ class SmokeTest extends TestCase
         $this->assertEquals(308300, $e->interesCorrido());
     }
 
-    public function test_periodo_semanal_cobra_por_semana(): void
+    public function test_periodo_de_cobro_redondea_al_bloque(): void
     {
         $this->seed(DatabaseSeeder::class);
         $e = Empeno::where('estado', 'activo')->firstOrFail();
-        $e->update(['saldo' => 1000000, 'pct' => 8, 'plazo' => 8, 'meses_pagados' => 0, 'periodo' => 'semanal']);
+        $e->update(['saldo' => 13600000, 'pct' => 4, 'meses_pagados' => 0]);
         $e->refresh();
+        $this->assertEquals(544000, $e->interesMes()); // interés MENSUAL
 
-        // Interés por semana = 8% de 1.000.000 = 80.000
-        $this->assertEquals(80000, $e->interesMes());
+        $e->inicio = now()->subDays(17); // 17 días transcurridos
 
-        // 3 días dentro de la semana (7 días): 80000*3/7 = 34285.7 -> 34300
-        $e->inicio = now()->subDays(3);
-        $this->assertEquals(34300, $e->interesCorrido());
+        $e->periodo = 'diario';
+        $this->assertEquals(308300, $e->interesCorrido());   // por día exacto: 544000/30*17
 
-        // Vencimiento = inicio + plazo (8 semanas = 56 días), por días fijos
-        $e->inicio = \Illuminate\Support\Carbon::parse('2026-01-01');
-        $this->assertEquals('2026-02-26', $e->vencimiento()->toDateString());
+        $e->periodo = 'semanal';
+        $this->assertEquals(380800, $e->interesCorrido());   // sube a 21 días (3 semanas)
+
+        $e->periodo = 'quincenal';
+        $this->assertEquals(544000, $e->interesCorrido());   // sube a 30 días (2 quincenas)
+
+        $e->periodo = 'mensual';
+        $this->assertEquals(544000, $e->interesCorrido());   // mes completo
+
+        // Quincenal a los 10 días: cobra los 15 completos "así no se hayan cumplido".
+        $e->inicio = now()->subDays(10);
+        $e->periodo = 'quincenal';
+        $this->assertEquals(272000, $e->interesCorrido());   // 544000/30*15
+
+        // El vencimiento sigue siendo MENSUAL (no cambia con el período de cobro).
+        $e->periodo = 'semanal';
+        $e->inicio = \Illuminate\Support\Carbon::parse('2026-01-15');
+        $e->plazo = 4;
+        $e->meses_pagados = 0;
+        $this->assertEquals('2026-05-15', $e->vencimiento()->toDateString());
     }
 
     public function test_redondear_cien(): void

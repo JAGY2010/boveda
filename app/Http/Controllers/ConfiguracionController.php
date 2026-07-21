@@ -29,7 +29,7 @@ class ConfiguracionController
             'nombre' => 'required|string|max:255',
             'nit' => 'nullable|string|max:50',
             'ciudad' => 'nullable|string|max:255',
-            'plazo_default' => 'required|integer|min:1|max:365',
+            'plazo_default' => 'required|integer|min:1|max:60',
             'periodo' => 'required|in:diario,semanal,quincenal,mensual',
             'pct_default' => 'required|numeric|min:0',
             'ltv_default' => 'required|integer|min:1|max:100',
