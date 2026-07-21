@@ -10,6 +10,44 @@ if (! function_exists('cop')) {
     }
 }
 
+if (! function_exists('diasDelPeriodo')) {
+    /** Días fijos de cada período de cobro (mensual = 30 comercial para prorratear). */
+    function diasDelPeriodo(?string $periodo): int
+    {
+        return match ($periodo) {
+            'diario' => 1,
+            'semanal' => 7,
+            'quincenal' => 15,
+            default => 30,
+        };
+    }
+}
+
+if (! function_exists('periodoLabel')) {
+    /** Nombre singular del período: día | semana | quincena | mes. */
+    function periodoLabel(?string $periodo): string
+    {
+        return match ($periodo) {
+            'diario' => 'día',
+            'semanal' => 'semana',
+            'quincenal' => 'quincena',
+            default => 'mes',
+        };
+    }
+}
+
+if (! function_exists('periodoLabelPlural')) {
+    function periodoLabelPlural(?string $periodo): string
+    {
+        return match ($periodo) {
+            'diario' => 'días',
+            'semanal' => 'semanas',
+            'quincenal' => 'quincenas',
+            default => 'meses',
+        };
+    }
+}
+
 if (! function_exists('redondearCien')) {
     /** Redondea al cien más cercano (49 abajo, 50 arriba). Ej: 308266 -> 308300; 308245 -> 308200. */
     function redondearCien($n): int

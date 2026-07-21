@@ -34,25 +34,51 @@ class Empeno extends Model
 
     // ---- Lógica del empeño (validada en el prototipo) ----
 
-    /** Interés de un mes = % sobre el saldo actual (redondeado al cien). */
+    // ---- Período de cobro (diario | semanal | quincenal | mensual) ----
+
+    /** Días del período de este empeño (mensual = 30 comercial para prorratear). */
+    public function diasPeriodo(): int
+    {
+        return diasDelPeriodo($this->periodo);
+    }
+
+    public function esMensual(): bool
+    {
+        return ($this->periodo ?: 'mensual') === 'mensual';
+    }
+
+    public function periodoLabel(): string
+    {
+        return periodoLabel($this->periodo);
+    }
+
+    /** Avanza N períodos desde una fecha: mensual por calendario, los demás por días fijos. */
+    private function avanzar(CarbonInterface $fecha, int $n): CarbonInterface
+    {
+        return $this->esMensual()
+            ? $fecha->copy()->addMonthsNoOverflow($n)
+            : $fecha->copy()->addDays($n * $this->diasPeriodo());
+    }
+
+    /** Interés de un período = % sobre el saldo actual (redondeado al cien). */
     public function interesMes(): int
     {
         return redondearCien($this->saldo * $this->pct / 100);
     }
 
-    /** Vencimiento = inicio + plazo + (nº de cuotas de interés pagadas). */
+    /** Vencimiento = inicio + plazo + (nº de cuotas pagadas), en períodos. */
     public function vencimiento(): CarbonInterface
     {
-        return $this->inicio->copy()->addMonthsNoOverflow($this->plazo + $this->meses_pagados);
+        return $this->avanzar($this->inicio, $this->plazo + $this->meses_pagados);
     }
 
     /** Fecha hasta la que el interés está cubierto. */
     public function cubiertoHasta(): CarbonInterface
     {
-        return $this->inicio->copy()->addMonthsNoOverflow($this->meses_pagados);
+        return $this->avanzar($this->inicio, $this->meses_pagados);
     }
 
-    /** Interés corrido POR DÍA exacto desde la última cuota cubierta, redondeado al cien más cercano. */
+    /** Interés corrido POR DÍA exacto dentro del período, redondeado al cien más cercano. */
     public function interesCorrido(): int
     {
         // Días completos transcurridos (el mismo día no cobra nada).
@@ -61,8 +87,8 @@ class Empeno extends Model
             return 0;
         }
 
-        // Interés por día = cuota mensual / 30 × días. Sigue corriendo más allá de un mes.
-        return redondearCien($this->interesMes() * $dias / 30);
+        // Interés por día = cuota del período / días del período × días. Sigue corriendo más allá de un período.
+        return redondearCien($this->interesMes() * $dias / $this->diasPeriodo());
     }
 
     /** Cuánto debe hoy para retirar = saldo + interés corrido. */
@@ -71,12 +97,22 @@ class Empeno extends Model
         return $this->saldo + $this->interesCorrido();
     }
 
-    /** Meses acumulados sin pagar (seguidos o no). */
+    /** Períodos transcurridos desde el inicio (mensual por calendario, los demás por días). */
+    private function periodosTranscurridos(): int
+    {
+        if ($this->esMensual()) {
+            return (int) $this->inicio->diffInMonths(now());
+        }
+
+        $dias = (int) $this->inicio->startOfDay()->diffInDays(now()->startOfDay(), false);
+
+        return max(0, intdiv($dias, $this->diasPeriodo()));
+    }
+
+    /** Períodos (cuotas) acumulados sin pagar (seguidos o no). */
     public function mesesSinPagar(): int
     {
-        $transcurridos = (int) $this->inicio->diffInMonths(now());
-
-        return max(0, $transcurridos - $this->meses_pagados);
+        return max(0, $this->periodosTranscurridos() - $this->meses_pagados);
     }
 
     /** Estado calculado: al dia | en mora | por perder | (o el estado cerrado). */

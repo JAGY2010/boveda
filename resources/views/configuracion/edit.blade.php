@@ -49,13 +49,22 @@
                     <input name="direccion" value="{{ old('direccion', $negocio->direccion) }}" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                 </div>
             </div>
+            <div>
+                <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Período de cobro</label>
+                <select name="periodo" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white">
+                    @foreach (['mensual' => 'Mensual', 'quincenal' => 'Quincenal (cada 15 días)', 'semanal' => 'Semanal (cada 7 días)', 'diario' => 'Diario'] as $val => $lbl)
+                        <option value="{{ $val }}" @selected(old('periodo', $negocio->periodo ?: 'mensual') === $val)>{{ $lbl }}</option>
+                    @endforeach
+                </select>
+                <p class="mt-1 text-xs text-zinc-400">Define cómo cobra este local: el interés (%) y el plazo se cuentan por este período. Los empeños ya creados no cambian.</p>
+            </div>
             <div class="grid gap-4 sm:grid-cols-3">
                 <div>
-                    <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Plazo (meses)</label>
+                    <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Plazo (en {{ periodoLabelPlural($negocio->periodo) }})</label>
                     <input type="number" name="plazo_default" value="{{ old('plazo_default', $negocio->plazo_default) }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                 </div>
                 <div>
-                    <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Interés % (def.)</label>
+                    <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Interés % por {{ periodoLabel($negocio->periodo) }}</label>
                     <input type="number" step="0.01" name="pct_default" value="{{ old('pct_default', $negocio->pct_default) }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                 </div>
                 <div>

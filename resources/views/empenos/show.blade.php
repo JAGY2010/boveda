@@ -18,11 +18,11 @@
             <div class="space-y-4 lg:col-span-2">
                 <div class="grid gap-4 sm:grid-cols-2">
                     <x-kpi label="Saldo capital" :value="cop($empeno->saldo)" :sub="'prestado ' . cop($empeno->principal)" accent="amber" />
-                    <x-kpi label="Vence" :value="$activo ? $empeno->vencimiento()->format('d/m/Y') : '—'" :sub="$activo ? 'interés ' . rtrim(rtrim($empeno->pct, '0'), '.') . '%/mes' : 'cerrado'" accent="emerald" />
+                    <x-kpi label="Vence" :value="$activo ? $empeno->vencimiento()->format('d/m/Y') : '—'" :sub="$activo ? 'interés ' . rtrim(rtrim($empeno->pct, '0'), '.') . '%/' . $empeno->periodoLabel() : 'cerrado'" accent="emerald" />
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <x-kpi label="Cuotas pagadas" :value="$empeno->meses_pagados" sub="de interés" accent="zinc" />
-                    <x-kpi label="Meses sin pagar" :value="$activo ? $empeno->mesesSinPagar() : '—'" :sub="'límite: ' . $empeno->plazo" :accent="$activo && $empeno->mesesSinPagar() >= $empeno->plazo ? 'amber' : 'sky'" />
+                    <x-kpi label="Cuotas sin pagar" :value="$activo ? $empeno->mesesSinPagar() : '—'" :sub="'límite: ' . $empeno->plazo" :accent="$activo && $empeno->mesesSinPagar() >= $empeno->plazo ? 'amber' : 'sky'" />
                 </div>
 
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -108,13 +108,13 @@
                     {{-- 1) Paga y conserva --}}
                     <div class="rounded-xl border border-emerald-600/40 bg-white p-5 shadow-sm dark:border-emerald-700/40 dark:bg-zinc-900">
                         <p class="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">1 · Paga y conserva el artículo</p>
-                        <p class="mb-3 mt-1 text-xs text-zinc-500">Paga el mes y <b>sigue</b> con el empeño. El artículo no se entrega; el vencimiento corre +1 mes.</p>
+                        <p class="mb-3 mt-1 text-xs text-zinc-500">Paga la cuota y <b>sigue</b> con el empeño. El artículo no se entrega; el vencimiento corre +1 {{ $empeno->periodoLabel() }}.</p>
                         <form method="POST" action="{{ route('empenos.pago', $empeno) }}" class="space-y-3">
                             @csrf
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Interés recibido</label>
                                 <input type="text" inputmode="numeric" name="interes_recibido" value="{{ $empeno->interesMes() }}" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
-                                <p class="mt-1 text-xs text-zinc-400">Cuota del mes: {{ cop($empeno->interesMes()) }}. Ajusta si recibiste otro valor.</p>
+                                <p class="mt-1 text-xs text-zinc-400">Cuota por {{ $empeno->periodoLabel() }}: {{ cop($empeno->interesMes()) }}. Ajusta si recibiste otro valor.</p>
                             </div>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Abono a capital (opcional)</label>

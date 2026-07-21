@@ -177,7 +177,7 @@ class SmokeTest extends TestCase
         $this->put('/configuracion', [
             'nombre' => 'La Playita Editada', 'nit' => '999-9', 'ciudad' => 'X',
             'representante' => 'Nuevo Rep', 'direccion' => 'Calle X', 'telefono' => '300',
-            'plazo_default' => 4, 'pct_default' => 20, 'ltv_default' => 50, 'consecutivo_inicial' => 5364,
+            'plazo_default' => 4, 'periodo' => 'mensual', 'pct_default' => 20, 'ltv_default' => 50, 'consecutivo_inicial' => 5364,
         ])->assertRedirect();
 
         $this->assertDatabaseHas('negocios', ['nombre' => 'La Playita Editada', 'nit' => '999-9', 'representante' => 'Nuevo Rep']);
@@ -213,6 +213,25 @@ class SmokeTest extends TestCase
         $e->inicio = now()->subDays(17);
         $this->assertEquals(544000, $e->interesMes());
         $this->assertEquals(308300, $e->interesCorrido());
+    }
+
+    public function test_periodo_semanal_cobra_por_semana(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $e = Empeno::where('estado', 'activo')->firstOrFail();
+        $e->update(['saldo' => 1000000, 'pct' => 8, 'plazo' => 8, 'meses_pagados' => 0, 'periodo' => 'semanal']);
+        $e->refresh();
+
+        // Interés por semana = 8% de 1.000.000 = 80.000
+        $this->assertEquals(80000, $e->interesMes());
+
+        // 3 días dentro de la semana (7 días): 80000*3/7 = 34285.7 -> 34300
+        $e->inicio = now()->subDays(3);
+        $this->assertEquals(34300, $e->interesCorrido());
+
+        // Vencimiento = inicio + plazo (8 semanas = 56 días), por días fijos
+        $e->inicio = \Illuminate\Support\Carbon::parse('2026-01-01');
+        $this->assertEquals('2026-02-26', $e->vencimiento()->toDateString());
     }
 
     public function test_redondear_cien(): void
@@ -476,7 +495,7 @@ class SmokeTest extends TestCase
 
         $this->actingAs($dueno)->put('/configuracion', [
             'nombre' => $negocio->nombre,
-            'plazo_default' => 4, 'pct_default' => 20, 'ltv_default' => 50,
+            'plazo_default' => 4, 'periodo' => 'mensual', 'pct_default' => 20, 'ltv_default' => 50,
             'consecutivo_inicial' => 1,
             'logo' => \Illuminate\Http\UploadedFile::fake()->image('logo.png', 80, 80),
         ])->assertRedirect();

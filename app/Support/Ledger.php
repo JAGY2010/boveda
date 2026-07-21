@@ -38,6 +38,7 @@ class Ledger
                 'saldo' => $principal,
                 'pct' => $data['pct'],
                 'plazo' => $data['plazo'],
+                'periodo' => $n->periodo ?: 'mensual',
                 'inicio' => $data['inicio'] ?? now()->toDateString(),
                 'meses_pagados' => 0,
                 'estado' => 'activo',

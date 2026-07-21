@@ -19,7 +19,10 @@
     // Nombre del artículo (editable): se usa el guardado directamente.
     $nombreArticulo = $empeno->articulo;
 
-    $im = (int) round($empeno->principal * $empeno->pct / 100); // interés mensual del contrato
+    $im = redondearCien($empeno->principal * $empeno->pct / 100); // interés del período (sobre el principal)
+    $pLabel = periodoLabel($empeno->periodo);
+    $pPlural = periodoLabelPlural($empeno->periodo);
+    $maxLiq = min((int) $empeno->plazo, 6);
 
     // Registro de abonos: autollenado con los pagos ya hechos; el resto en blanco.
     $filas = [];
@@ -177,7 +180,7 @@
 
             <p style="margin-top:6px"><b>PRIMERA — VENTA.</b> Manifiesto que TRANSFIERO A TÍTULO DE VENTA REAL Y ENAJENACIÓN PERPETUA a favor de {{ $neg->nombre }}, bajo condición resolutoria de <i>pacto de retroventa</i>; el vendedor se reserva la facultad de recobrar la(s) cosa(s) vendida(s) (Art. 1939 del C.C.). Como precio de venta hemos convenido la suma de <b>{{ cop($empeno->principal) }}</b> (<b>{{ $enLetras }}</b>), dinero que declaro recibir a entera satisfacción de manos del comprador.</p>
 
-            <p><b>SEGUNDA — RETROVENTA.</b> El vendedor podrá recobrar el artículo pagando al comprador el valor de la venta más un porcentaje del <b>{{ $pct }}%</b> por mes o fracción de mes, sobre el valor de la venta, dentro del término de <b>{{ $empeno->plazo }} meses</b> contados a partir de la fecha de este contrato, plazo modificable por escrito y mutuo acuerdo.</p>
+            <p><b>SEGUNDA — RETROVENTA.</b> El vendedor podrá recobrar el artículo pagando al comprador el valor de la venta más un porcentaje del <b>{{ $pct }}%</b> por {{ $pLabel }} o fracción de {{ $pLabel }}, sobre el valor de la venta, dentro del término de <b>{{ $empeno->plazo }} {{ $pPlural }}</b> contados a partir de la fecha de este contrato, plazo modificable por escrito y mutuo acuerdo.</p>
 
             <p><b>TERCERA — VENCIMIENTO.</b> Vencido el término sin que el vendedor ejerza el pacto de retroventa ni acuerde prórroga por escrito, la propiedad del bien se consolida de manera plena y definitiva en cabeza del comprador, quien podrá disponer libremente de él sin lugar a reclamación alguna.</p>
 
@@ -189,13 +192,13 @@
             <table class="liq">
                 <tr class="lh">
                     <th>Valor recibido</th>
-                    @for ($n = 1; $n <= $empeno->plazo; $n++)
-                        <th>Hasta mes {{ $n }}</th>
+                    @for ($n = 1; $n <= $maxLiq; $n++)
+                        <th>Hasta {{ $pLabel }} {{ $n }}</th>
                     @endfor
                 </tr>
                 <tr>
                     <td>{{ cop($empeno->principal) }}</td>
-                    @for ($n = 1; $n <= $empeno->plazo; $n++)
+                    @for ($n = 1; $n <= $maxLiq; $n++)
                         <td>{{ cop($empeno->principal + $im * $n) }}</td>
                     @endfor
                 </tr>
