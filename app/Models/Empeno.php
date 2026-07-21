@@ -15,6 +15,7 @@ class Empeno extends Model
         'atributos' => 'array',
         'inicio' => 'date',
         'pct' => 'decimal:2',
+        'pct_desde' => 'date',
     ];
 
     public function negocio()

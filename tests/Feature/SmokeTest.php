@@ -52,14 +52,19 @@ class SmokeTest extends TestCase
         }
     }
 
-    public function test_el_empleado_no_ve_contabilidad(): void
+    public function test_empleado_ve_caja_y_registra_gastos(): void
     {
         $this->seed(DatabaseSeeder::class);
         $empleado = User::where('email', 'empleado@boveda.test')->firstOrFail();
 
-        $this->actingAs($empleado)->get('/contabilidad')->assertForbidden();
+        // Ve la caja/gastos y puede registrar un gasto
+        $this->actingAs($empleado)->get('/contabilidad')->assertOk();
+        $this->actingAs($empleado)->post('/contabilidad/gasto', ['categoria' => 'Servicios', 'monto' => 20000])->assertRedirect();
+        $this->assertDatabaseHas('gastos', ['categoria' => 'Servicios', 'monto' => 20000]);
+
+        // Pero NO ve el reporte ni la configuración
+        $this->actingAs($empleado)->get('/reporte')->assertForbidden();
         $this->actingAs($empleado)->get('/configuracion')->assertForbidden();
-        $this->actingAs($empleado)->get('/empenos')->assertOk();
     }
 
     public function test_numero_a_letras(): void
@@ -558,17 +563,47 @@ class SmokeTest extends TestCase
             'numero' => 77, 'inicio' => $nuevaFecha,
         ])->assertForbidden();
 
-        // El dueño sí (número, fecha y datos del artículo)
+        // El dueño sí (número, fecha, %, y datos del artículo)
         $this->actingAs($dueno)->put("/empenos/{$empeno->id}/datos", [
             'numero' => 88888, 'inicio' => $nuevaFecha,
+            'pct' => 5, 'pct_desde' => $nuevaFecha,
             'articulo' => 'Moto Editada', 'serial' => 'ABC123', 'color' => 'Rojo', 'observaciones' => 'buen estado',
         ])->assertRedirect();
 
         $empeno->refresh();
         $this->assertEquals(88888, (int) $empeno->numero);
         $this->assertEquals($nuevaFecha, $empeno->inicio->toDateString());
+        $this->assertEquals(5.0, (float) $empeno->pct);
+        $this->assertEquals($nuevaFecha, $empeno->pct_desde->toDateString());
         $this->assertEquals('Moto Editada', $empeno->articulo);
         $this->assertEquals('Rojo', $empeno->color);
+    }
+
+    public function test_inventario_guarda_fechas_compra_venta(): void
+    {
+        $dueno = $this->owner();
+        $fcompra = now()->subMonth()->toDateString();
+
+        $this->actingAs($dueno)->post('/inventario/comprar', [
+            'descripcion' => 'Bicicleta', 'costo' => 100000, 'fecha_compra' => $fcompra,
+        ])->assertRedirect();
+
+        $item = \App\Models\InventarioItem::where('descripcion', 'Bicicleta')->firstOrFail();
+        $this->assertEquals($fcompra, $item->fecha_compra->toDateString());
+
+        $fventa = now()->subDays(5)->toDateString();
+        $this->actingAs($dueno)->post("/inventario/{$item->id}/vender", ['valor' => 150000, 'fecha_venta' => $fventa])->assertRedirect();
+        $this->assertEquals($fventa, $item->fresh()->fecha_venta->toDateString());
+    }
+
+    public function test_buscar_empeno_por_numero(): void
+    {
+        $dueno = $this->owner();
+        $empeno = Empeno::where('estado', 'activo')->firstOrFail();
+
+        $this->actingAs($dueno)->get('/empenos?q='.$empeno->numero)
+            ->assertOk()
+            ->assertSee($empeno->cliente->nombre);
     }
 
     public function test_reporte_solo_dueno(): void

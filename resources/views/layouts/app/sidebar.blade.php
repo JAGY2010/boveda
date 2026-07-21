@@ -42,10 +42,10 @@
                     <flux:sidebar.item icon="shopping-bag" :href="route('inventario.index')" :current="request()->routeIs('inventario.*')" wire:navigate>
                         {{ __('Ventas e inventario') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="chart-pie" :href="route('contabilidad.index')" :current="request()->routeIs('contabilidad.*')" wire:navigate>
+                        {{ auth()->user()->puedeVerDinero() ? __('Contabilidad') : __('Caja y gastos') }}
+                    </flux:sidebar.item>
                     @if (auth()->user()->puedeVerDinero())
-                        <flux:sidebar.item icon="chart-pie" :href="route('contabilidad.index')" :current="request()->routeIs('contabilidad.*')" wire:navigate>
-                            {{ __('Contabilidad') }}
-                        </flux:sidebar.item>
                         <flux:sidebar.item icon="document-chart-bar" :href="route('reporte.index')" :current="request()->routeIs('reporte.*')" wire:navigate>
                             {{ __('Reporte') }}
                         </flux:sidebar.item>

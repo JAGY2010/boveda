@@ -27,6 +27,9 @@ class EmpenoController
                             $c->orWhereRaw("REPLACE(REPLACE(cedula,'.',''),' ','') LIKE ?", ["%{$dq}%"]);
                         }
                     })->orWhere('articulo', 'like', "%{$q}%");
+                    if ($dq !== '') {
+                        $w->orWhere('numero', (int) $dq);
+                    }
                 });
             })
             ->get();
@@ -187,6 +190,8 @@ class EmpenoController
         $data = $r->validate([
             'numero' => ['required', 'integer', 'min:1', \Illuminate\Validation\Rule::unique('empenos')->where(fn ($q) => $q->where('negocio_id', $empeno->negocio_id))->ignore($empeno->id)],
             'inicio' => ['required', 'date', 'before_or_equal:today'],
+            'pct' => 'required|numeric|min:0',
+            'pct_desde' => 'nullable|date|before_or_equal:today',
             'articulo' => 'required|string|max:255',
             'serial' => 'nullable|string|max:255',
             'color' => 'nullable|string|max:100',
@@ -195,9 +200,15 @@ class EmpenoController
             'numero.unique' => 'Ese número de contrato ya existe en este local.',
         ]);
 
+        // Si cambió el % y no dieron fecha, se marca desde hoy.
+        $pctCambio = (float) $data['pct'] !== (float) $empeno->pct;
+        $pctDesde = $data['pct_desde'] ?? ($pctCambio ? now()->toDateString() : $empeno->pct_desde);
+
         $empeno->update([
             'numero' => (int) $data['numero'],
             'inicio' => $data['inicio'],
+            'pct' => $data['pct'],
+            'pct_desde' => $pctDesde,
             'articulo' => $data['articulo'],
             'serial' => $data['serial'] ?? null,
             'color' => $data['color'] ?? null,

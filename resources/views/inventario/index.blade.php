@@ -17,17 +17,22 @@
             </div>
             <div>
                 <label class="mb-1 block text-xs font-semibold text-zinc-500">Valor de compra</label>
-                <input type="text" inputmode="numeric" name="costo" required placeholder="300.000" class="money w-40 rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                <input type="text" inputmode="numeric" name="costo" required placeholder="300.000" class="money w-36 rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+            </div>
+            <div>
+                <label class="mb-1 block text-xs font-semibold text-zinc-500">Fecha de compra</label>
+                <input type="date" name="fecha_compra" value="{{ now()->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" class="rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
             </div>
             <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Comprar</button>
         </form>
 
         <p class="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-400">Para vender</p>
         <div class="mb-6 overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <table class="w-full min-w-[520px] text-sm">
+            <table class="w-full min-w-[620px] text-sm">
                 <thead>
                     <tr class="border-b border-zinc-100 text-left text-xs uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
                         <th class="px-4 py-3 font-semibold">Artículo</th>
+                        <th class="px-4 py-3 font-semibold">Comprado</th>
                         <th class="px-4 py-3 text-right font-semibold">Costo</th>
                         <th class="px-4 py-3 text-right font-semibold">Vender</th>
                     </tr>
@@ -39,17 +44,19 @@
                                 <div class="font-semibold text-zinc-900 dark:text-white">{{ $it->descripcion }}</div>
                                 <div class="text-xs text-zinc-400">{{ $it->origen === 'perdido' ? 'No retirado · empeño #' . optional($it->empeno)->numero : 'Compra directa' }}</div>
                             </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-zinc-500">{{ optional($it->fecha_compra)->format('d/m/Y') ?: '—' }}</td>
                             <td class="px-4 py-3 text-right tabular-nums">{{ cop($it->costo) }}</td>
                             <td class="px-4 py-3">
-                                <form method="POST" action="{{ route('inventario.vender', $it) }}" class="flex items-center justify-end gap-2">
+                                <form method="POST" action="{{ route('inventario.vender', $it) }}" class="flex flex-wrap items-center justify-end gap-2">
                                     @csrf
-                                    <input type="text" inputmode="numeric" name="valor" required placeholder="{{ number_format(round($it->costo * 1.4), 0, ',', '.') }}" class="money w-32 rounded-lg border border-zinc-300 bg-zinc-50 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                                    <input type="text" inputmode="numeric" name="valor" required placeholder="{{ number_format(round($it->costo * 1.4), 0, ',', '.') }}" class="money w-28 rounded-lg border border-zinc-300 bg-zinc-50 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                                    <input type="date" name="fecha_venta" value="{{ now()->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" class="rounded-lg border border-zinc-300 bg-zinc-50 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                                     <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500">Vender</button>
                                 </form>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="3" class="px-4 py-10 text-center text-zinc-400">Nada por vender. Los artículos no retirados o comprados directo aparecen aquí.</td></tr>
+                        <tr><td colspan="4" class="px-4 py-10 text-center text-zinc-400">Nada por vender. Los artículos no retirados o comprados directo aparecen aquí.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -57,10 +64,12 @@
 
         <p class="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-400">Vendidos</p>
         <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <table class="w-full min-w-[520px] text-sm">
+            <table class="w-full min-w-[620px] text-sm">
                 <thead>
                     <tr class="border-b border-zinc-100 text-left text-xs uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
                         <th class="px-4 py-3 font-semibold">Artículo</th>
+                        <th class="px-4 py-3 font-semibold">Comprado</th>
+                        <th class="px-4 py-3 font-semibold">Vendido</th>
                         <th class="px-4 py-3 text-right font-semibold">Costo</th>
                         <th class="px-4 py-3 text-right font-semibold">Venta</th>
                         <th class="px-4 py-3 text-right font-semibold">Ganancia</th>
@@ -70,12 +79,14 @@
                     @forelse ($vendidos as $it)
                         <tr>
                             <td class="px-4 py-3 font-semibold text-zinc-900 dark:text-white">{{ $it->descripcion }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-zinc-500">{{ optional($it->fecha_compra)->format('d/m/Y') ?: '—' }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-zinc-500">{{ optional($it->fecha_venta)->format('d/m/Y') ?: '—' }}</td>
                             <td class="px-4 py-3 text-right tabular-nums">{{ cop($it->costo) }}</td>
                             <td class="px-4 py-3 text-right tabular-nums">{{ cop($it->venta) }}</td>
                             <td class="px-4 py-3 text-right font-semibold tabular-nums {{ $it->venta - $it->costo >= 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ cop($it->venta - $it->costo) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="px-4 py-10 text-center text-zinc-400">Aún no hay ventas</td></tr>
+                        <tr><td colspan="6" class="px-4 py-10 text-center text-zinc-400">Aún no hay ventas</td></tr>
                     @endforelse
                 </tbody>
             </table>

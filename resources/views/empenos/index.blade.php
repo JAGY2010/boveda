@@ -15,7 +15,7 @@
 
         <form method="GET" class="mb-3 max-w-md">
             <input type="hidden" name="estado" value="{{ $estado }}">
-            <input name="q" value="{{ $q }}" placeholder="Buscar por nombre, cédula o artículo…" autocomplete="off"
+            <input name="q" value="{{ $q }}" placeholder="Buscar por nombre, cédula, artículo o N° de contrato…" autocomplete="off"
                    class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
         </form>
 

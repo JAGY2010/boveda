@@ -173,6 +173,7 @@ class Ledger
                 'costo' => $saldo,
                 'origen' => 'perdido',
                 'estado' => 'disponible',
+                'fecha_compra' => now()->toDateString(),
             ]);
 
             $e->update(['estado' => 'perdido']);
@@ -180,9 +181,10 @@ class Ledger
     }
 
     /** Compra directa (el cliente vende en vez de empeñar). */
-    public static function comprarDirecto(Negocio $n, string $desc, int $costo): void
+    public static function comprarDirecto(Negocio $n, string $desc, int $costo, ?string $fecha = null): void
     {
-        DB::transaction(function () use ($n, $desc, $costo) {
+        DB::transaction(function () use ($n, $desc, $costo, $fecha) {
+            $fecha = $fecha ?: now()->toDateString();
             $n->decrement('caja', $costo);
             $n->increment('inventario_valor', $costo);
             $n->inventario()->create([
@@ -190,22 +192,24 @@ class Ledger
                 'costo' => $costo,
                 'origen' => 'compra',
                 'estado' => 'disponible',
+                'fecha_compra' => $fecha,
             ]);
-            self::mov($n, "Compra directa: {$desc}", -$costo);
+            self::mov($n, "Compra directa: {$desc}", -$costo, $fecha);
         });
     }
 
     /** Vender un artículo: el costo vuelve a caja, el excedente a ganancias. */
-    public static function vender(InventarioItem $it, int $valor): void
+    public static function vender(InventarioItem $it, int $valor, ?string $fecha = null): void
     {
-        DB::transaction(function () use ($it, $valor) {
+        DB::transaction(function () use ($it, $valor, $fecha) {
+            $fecha = $fecha ?: now()->toDateString();
             $n = $it->negocio;
             $n->increment('caja', $valor);
             $n->decrement('inventario_valor', $it->costo);
             $n->increment('acum_margen', $valor - $it->costo);
-            self::mov($n, "Venta: {$it->descripcion}", $valor);
+            self::mov($n, "Venta: {$it->descripcion}", $valor, $fecha);
 
-            $it->update(['estado' => 'vendido', 'venta' => $valor]);
+            $it->update(['estado' => 'vendido', 'venta' => $valor, 'fecha_venta' => $fecha]);
         });
     }
 

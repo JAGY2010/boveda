@@ -10,6 +10,11 @@ class InventarioItem extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'fecha_compra' => 'date',
+        'fecha_venta' => 'date',
+    ];
+
     public function negocio()
     {
         return $this->belongsTo(Negocio::class);

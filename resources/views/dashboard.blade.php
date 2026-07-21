@@ -22,14 +22,15 @@
                 <x-kpi label="Ganancia neta" :value="cop($negocio->gananciaNeta())" :sub="'bruta ' . cop($negocio->gananciaBruta())" accent="sky" />
             </div>
         @else
-            <div class="grid gap-4 sm:grid-cols-3">
-                <x-kpi label="Clientes" :value="$negocio->clientes()->count()" sub="registrados" accent="emerald" />
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <x-kpi label="Caja disponible" :value="cop($negocio->caja)" sub="efectivo que debe haber" accent="emerald" />
+                <x-kpi label="Clientes" :value="$negocio->clientes()->count()" sub="registrados" accent="zinc" />
                 <x-kpi label="Empeños activos" :value="$activos->count()" sub="en curso" accent="amber" />
                 <x-kpi label="Vencen esta semana" :value="$venceSemana" sub="para avisar" accent="sky" />
             </div>
             <div class="mt-3 flex items-start gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
                 <span class="font-bold text-amber-600">•</span>
-                <span>Como <b>empleado</b> no ves el dinero ni las ganancias del negocio. Puedes registrar clientes, empeños, pagos y ventas.</span>
+                <span>Como <b>empleado</b> ves la <b>caja</b> (para saber cuánto efectivo debe haber) y puedes registrar clientes, empeños, pagos, ventas y gastos. No ves las ganancias ni el capital invertido.</span>
             </div>
         @endif
 

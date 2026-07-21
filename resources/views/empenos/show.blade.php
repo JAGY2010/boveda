@@ -32,6 +32,7 @@
                         <div class="flex justify-between border-b border-zinc-100 pb-1 dark:border-zinc-800"><dt class="text-zinc-400">Celular</dt><dd>{{ $empeno->cliente->tel }}</dd></div>
                         <div class="flex justify-between border-b border-zinc-100 pb-1 dark:border-zinc-800"><dt class="text-zinc-400">Serial / IMEI</dt><dd>{{ $empeno->serial ?: '—' }}</dd></div>
                         <div class="flex justify-between border-b border-zinc-100 pb-1 dark:border-zinc-800"><dt class="text-zinc-400">Inicio</dt><dd>{{ $empeno->inicio->format('d/m/Y') }}</dd></div>
+                        <div class="flex justify-between border-b border-zinc-100 pb-1 dark:border-zinc-800"><dt class="text-zinc-400">Interés</dt><dd>{{ rtrim(rtrim($empeno->pct, '0'), '.') }}%/mes @if($empeno->pct_desde)<span class="text-zinc-400">· desde {{ $empeno->pct_desde->format('d/m/Y') }}</span>@endif</dd></div>
                         @if ($empeno->categoria)
                             <div class="flex justify-between border-b border-zinc-100 pb-1 dark:border-zinc-800"><dt class="text-zinc-400">Categoría</dt><dd>{{ $empeno->categoria }}</dd></div>
                         @endif
@@ -76,6 +77,15 @@
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Fecha de inicio</label>
                                 <input type="date" name="inicio" value="{{ $empeno->inicio->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Interés mensual (%)</label>
+                                <input type="number" step="0.01" name="pct" value="{{ rtrim(rtrim($empeno->pct, '0'), '.') }}" required class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">% aplica desde</label>
+                                <input type="date" name="pct_desde" value="{{ optional($empeno->pct_desde)->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                                <p class="mt-1 text-xs text-zinc-400">Fecha desde la que cobra el nuevo %.</p>
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Artículo</label>

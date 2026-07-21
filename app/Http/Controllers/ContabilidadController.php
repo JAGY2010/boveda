@@ -9,13 +9,14 @@ class ContabilidadController
 {
     public function index()
     {
-        abort_unless(auth()->user()->puedeVerDinero(), 403);
+        // El empleado ve solo la caja y puede registrar gastos; el dueño/admin ve todo.
         $negocio = local();
+        $verDinero = auth()->user()->puedeVerDinero();
 
-        $movimientos = $negocio->movimientos()->orderByDesc('id')->limit(15)->get();
+        $movimientos = $verDinero ? $negocio->movimientos()->orderByDesc('id')->limit(15)->get() : collect();
         $gastos = $negocio->gastos()->orderByDesc('id')->limit(15)->get();
 
-        return view('contabilidad.index', compact('negocio', 'movimientos', 'gastos'));
+        return view('contabilidad.index', compact('negocio', 'movimientos', 'gastos', 'verDinero'));
     }
 
     public function capital(Request $r)
@@ -39,7 +40,7 @@ class ContabilidadController
 
     public function gasto(Request $r)
     {
-        abort_unless(auth()->user()->puedeVerDinero(), 403);
+        // El empleado también puede registrar gastos.
         $negocio = local();
 
         $data = $r->validate([
