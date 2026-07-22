@@ -74,23 +74,25 @@ class Empeno extends Model
      * (cuota/30 por día); los días transcurridos se redondean HACIA ARRIBA al bloque de
      * cobro del local (día, semana, quincena o mes). Sigue corriendo más allá de un mes.
      */
-    public function interesCorrido(): int
+    public function interesCorrido(?string $periodo = null): int
     {
         $dias = (int) $this->cubiertoHasta()->startOfDay()->diffInDays(now()->startOfDay(), false);
         if ($dias <= 0) {
             return 0;
         }
 
-        $u = $this->diasPeriodo();
+        // Por defecto usa el período del empeño; en el retiro el empleado puede
+        // elegir otro bloque (día/semana/quincena/mes) solo para ese cobro.
+        $u = $periodo ? diasDelPeriodo($periodo) : $this->diasPeriodo();
         $diasCobrados = (int) (ceil($dias / $u) * $u); // redondeo hacia arriba al bloque
 
         return redondearCien($this->interesMes() * $diasCobrados / 30);
     }
 
     /** Cuánto debe hoy para retirar = saldo + interés corrido. */
-    public function deudaHoy(): int
+    public function deudaHoy(?string $periodo = null): int
     {
-        return $this->saldo + $this->interesCorrido();
+        return $this->saldo + $this->interesCorrido($periodo);
     }
 
     /** Meses acumulados sin pagar (seguidos o no). */

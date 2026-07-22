@@ -255,6 +255,24 @@ class SmokeTest extends TestCase
         $this->assertEquals('2026-05-15', $e->vencimiento()->toDateString());
     }
 
+    public function test_interes_corrido_override_periodo_en_retiro(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $e = Empeno::where('estado', 'activo')->firstOrFail();
+        $e->update(['saldo' => 13600000, 'pct' => 4, 'meses_pagados' => 0, 'periodo' => 'diario']);
+        $e->refresh();
+        $e->inicio = now()->subDays(17);
+
+        // El empeño es 'diario', pero el retiro puede elegir otro bloque solo para ese cobro.
+        $this->assertEquals(308300, $e->interesCorrido());              // su período: día exacto
+        $this->assertEquals(380800, $e->interesCorrido('semanal'));     // override a semana (21 días)
+        $this->assertEquals(544000, $e->interesCorrido('quincenal'));   // override a quincena (30 días)
+        $this->assertEquals(544000, $e->deudaHoy('quincenal') - $e->saldo);
+
+        // El período guardado en el empeño no cambia.
+        $this->assertEquals('diario', $e->periodo);
+    }
+
     public function test_redondear_cien(): void
     {
         $this->assertEquals(308300, redondearCien(308266.67));

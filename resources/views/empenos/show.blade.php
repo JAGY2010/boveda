@@ -141,22 +141,61 @@
                     </div>
 
                     {{-- 2) Retira (desempeño) --}}
+                    @php
+                        $periodosRetiro = ['diario' => 'Día exacto', 'semanal' => 'Semana', 'quincenal' => 'Quincena', 'mensual' => 'Mes completo'];
+                        $periodoActual = $empeno->periodo ?: 'diario';
+                        $opcionesRetiro = [];
+                        foreach ($periodosRetiro as $k => $lbl) {
+                            $opcionesRetiro[$k] = [
+                                'interes' => $empeno->interesCorrido($k),
+                                'deuda' => $empeno->deudaHoy($k),
+                                'label' => $lbl,
+                            ];
+                        }
+                    @endphp
                     <div class="rounded-xl border border-amber-500/50 bg-amber-500/5 p-5 shadow-sm">
                         <p class="text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">2 · Retira el artículo (desempeño)</p>
                         <p class="mb-3 mt-1 text-xs text-zinc-500">Paga todo y <b>se lleva</b> el artículo. El empeño se cierra.</p>
+
+                        <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Cobrar el interés por</label>
+                        <select id="retiroPeriodo" class="mb-3 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white">
+                            @foreach ($periodosRetiro as $k => $lbl)
+                                <option value="{{ $k }}" @selected($k === $periodoActual)>{{ $lbl }}</option>
+                            @endforeach
+                        </select>
+
                         <div class="mb-3 rounded-lg border border-amber-500/40 bg-white px-4 py-3 text-center dark:bg-zinc-900">
                             <div class="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-500">Debe hoy para llevárselo</div>
-                            <div class="my-0.5 text-3xl font-semibold tabular-nums text-zinc-900 dark:text-white">{{ cop($empeno->deudaHoy()) }}</div>
-                            <div class="text-xs text-zinc-500">saldo {{ cop($empeno->saldo) }} + interés {{ cop($empeno->interesCorrido()) }} <span class="text-zinc-400">(cobro por {{ $empeno->periodoLabel() }})</span></div>
+                            <div id="retiroDeuda" class="my-0.5 text-3xl font-semibold tabular-nums text-zinc-900 dark:text-white">{{ cop($empeno->deudaHoy($periodoActual)) }}</div>
+                            <div class="text-xs text-zinc-500">saldo {{ cop($empeno->saldo) }} + interés <span id="retiroInteres">{{ cop($empeno->interesCorrido($periodoActual)) }}</span></div>
                         </div>
                         <form method="POST" action="{{ route('empenos.retirar', $empeno) }}" onsubmit="return confirm('¿El cliente se lleva el artículo? El empeño se cierra y el capital vuelve a caja. Este valor YA incluye el interés: no registres el pago del mes aparte.')">
                             @csrf
                             <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Valor recibido</label>
-                            <input type="text" inputmode="numeric" name="valor_recibido" value="{{ $empeno->deudaHoy() }}" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            <input type="text" inputmode="numeric" name="valor_recibido" id="retiroValor" value="{{ $empeno->deudaHoy($periodoActual) }}" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                             <p class="mt-1 text-xs text-zinc-400"><b>Ya incluye el interés que debe</b> — no registres el pago del mes aparte. Ajusta si recibiste otro valor.</p>
                             <button type="submit" class="mt-3 w-full rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-400">Registrar retiro y entregar artículo</button>
                         </form>
                     </div>
+                    <script>
+                        (function () {
+                            var data = @json($opcionesRetiro);
+                            var sel = document.getElementById('retiroPeriodo');
+                            var deudaEl = document.getElementById('retiroDeuda');
+                            var interesEl = document.getElementById('retiroInteres');
+                            var valorEl = document.getElementById('retiroValor');
+                            if (!sel) return;
+                            function cop(n) { return '$' + Number(n).toLocaleString('es-CO'); }
+                            sel.addEventListener('change', function () {
+                                var o = data[sel.value];
+                                if (!o) return;
+                                deudaEl.textContent = cop(o.deuda);
+                                interesEl.textContent = cop(o.interes);
+                                if (window.Money) { window.Money.set(valorEl, o.deuda); }
+                                else { valorEl.value = o.deuda; }
+                            });
+                        })();
+                    </script>
 
                     <div class="flex flex-wrap gap-2">
                         <a href="{{ route('empenos.contrato', $empeno) }}" target="_blank" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">Ver contrato</a>
