@@ -9,10 +9,10 @@ class ExampleTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_returns_a_successful_response(): void
+    public function test_la_raiz_lleva_al_tablero(): void
     {
-        $response = $this->get(route('home'));
-
-        $response->assertOk();
+        // La página de inicio no muestra contenido propio: envía al tablero
+        // (y de ahí, si no hay sesión, al login).
+        $this->get(route('home'))->assertRedirect(route('dashboard'));
     }
 }
