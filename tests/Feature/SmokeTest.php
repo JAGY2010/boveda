@@ -313,6 +313,72 @@ class SmokeTest extends TestCase
         $this->assertEquals($prestadoAntes - $saldo, (int) $n->prestado);
     }
 
+    public function test_historia_del_articulo_y_acta_de_entrega(): void
+    {
+        $dueno = $this->owner();
+        $e = Empeno::where('estado', 'activo')->firstOrFail();
+        $e->pagos()->delete(); // partimos de un empeño limpio (el seeder trae pagos)
+        $e->update(['principal' => 1000000, 'saldo' => 1000000, 'pct' => 5, 'meses_pagados' => 0, 'inicio' => now()->subMonths(3)->toDateString()]);
+
+        // Un pago de solo interés y otro con abono a capital.
+        $this->actingAs($dueno)->post("/empenos/{$e->id}/pago", ['interes_recibido' => 50000])->assertRedirect();
+        $this->actingAs($dueno)->post("/empenos/{$e->id}/pago", ['interes_recibido' => 50000, 'abono' => 200000])->assertRedirect();
+
+        $e->refresh();
+        $this->assertEquals(800000, (int) $e->saldo); // 1.000.000 − 200.000 de abono
+
+        // Retiro: paga el saldo restante + 40.000 de interés final.
+        $fechaRetiro = now()->toDateString();
+        $this->actingAs($dueno)->post("/empenos/{$e->id}/retirar", ['valor_recibido' => 840000, 'fecha' => $fechaRetiro])->assertRedirect();
+
+        $e->refresh()->load('pagos');
+        $this->assertEquals('retirado', $e->estado);
+        $this->assertEquals($fechaRetiro, $e->fecha_retiro->toDateString());
+        $this->assertEquals(840000, (int) $e->valor_retiro);
+
+        // Historia del artículo.
+        $this->assertEquals(200000, $e->totalAbonos());
+        $this->assertEquals(100000, $e->totalInteresPagos());     // 50.000 + 50.000
+        $this->assertEquals(40000, $e->interesRetiro());          // 840.000 − (1.000.000 − 200.000)
+        $this->assertEquals(140000, $e->totalIntereses());
+        $this->assertEquals(1140000, $e->totalPagado());          // 100.000 + 200.000 + 840.000
+        // Coherencia: lo que pagó = lo que recibió + los intereses.
+        $this->assertEquals((int) $e->principal + $e->totalIntereses(), $e->totalPagado());
+
+        // El acta se genera y muestra las cifras clave.
+        $this->actingAs($dueno)->get("/empenos/{$e->id}/acta")
+            ->assertOk()
+            ->assertSee('ACTA DE ENTREGA Y PAZ Y SALVO')
+            ->assertSee('$1.140.000');
+
+        // No hay acta para un empeño que no se ha retirado.
+        $otro = Empeno::where('estado', 'activo')->firstOrFail();
+        $this->actingAs($dueno)->get("/empenos/{$otro->id}/acta")->assertNotFound();
+    }
+
+    public function test_gasto_con_fecha(): void
+    {
+        $dueno = $this->owner();
+        $ayer = now()->subDays(10)->toDateString();
+
+        $this->actingAs($dueno)->post('/contabilidad/gasto', [
+            'categoria' => 'Arriendo', 'monto' => 300000, 'fecha' => $ayer,
+        ])->assertRedirect();
+
+        $g = \App\Models\Gasto::where('categoria', 'Arriendo')->firstOrFail();
+        $this->assertEquals(300000, (int) $g->monto);
+        $this->assertEquals($ayer, $g->fecha->toDateString());
+
+        // Sin fecha explícita queda con la de hoy.
+        $this->actingAs($dueno)->post('/contabilidad/gasto', ['categoria' => 'Servicios', 'monto' => 50000])->assertRedirect();
+        $this->assertEquals(now()->toDateString(), \App\Models\Gasto::where('categoria', 'Servicios')->firstOrFail()->fecha->toDateString());
+
+        // No se aceptan fechas futuras.
+        $this->actingAs($dueno)->post('/contabilidad/gasto', [
+            'categoria' => 'Futuro', 'monto' => 1000, 'fecha' => now()->addDay()->toDateString(),
+        ])->assertSessionHasErrors('fecha');
+    }
+
     public function test_suscripcion_vencida_bloquea_operacion(): void
     {
         $dueno = $this->owner();

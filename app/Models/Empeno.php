@@ -16,6 +16,7 @@ class Empeno extends Model
         'inicio' => 'date',
         'pct' => 'decimal:2',
         'pct_desde' => 'date',
+        'fecha_retiro' => 'date',
     ];
 
     public function negocio()
@@ -101,6 +102,55 @@ class Empeno extends Model
         $transcurridos = (int) $this->inicio->diffInMonths(now());
 
         return max(0, $transcurridos - $this->meses_pagados);
+    }
+
+    // ---- Historia del artículo (resumen de toda la vida del empeño) ----
+
+    /** Suma de los abonos a capital hechos durante el empeño. */
+    public function totalAbonos(): int
+    {
+        return (int) $this->pagos->sum('abono');
+    }
+
+    /** Suma de los intereses cobrados en los pagos mensuales (sin el retiro final). */
+    public function totalInteresPagos(): int
+    {
+        return (int) $this->pagos->sum('interes');
+    }
+
+    /**
+     * Interés cobrado en el retiro final. El saldo solo baja con abonos, así que
+     * el saldo al momento de retirar = principal − abonos; lo demás fue interés.
+     */
+    public function interesRetiro(): int
+    {
+        if ($this->valor_retiro === null) {
+            return 0;
+        }
+
+        $saldoAlRetirar = (int) $this->principal - $this->totalAbonos();
+
+        return max(0, (int) $this->valor_retiro - $saldoAlRetirar);
+    }
+
+    /** Todo lo que el cliente pagó en intereses durante la vida del empeño. */
+    public function totalIntereses(): int
+    {
+        return $this->totalInteresPagos() + $this->interesRetiro();
+    }
+
+    /** Todo lo que el cliente entregó al negocio (intereses + abonos + retiro). */
+    public function totalPagado(): int
+    {
+        return $this->totalInteresPagos() + $this->totalAbonos() + (int) $this->valor_retiro;
+    }
+
+    /** Días que el artículo estuvo en el negocio. */
+    public function diasEnPrenda(): int
+    {
+        $fin = $this->fecha_retiro ?: now();
+
+        return max(0, (int) $this->inicio->startOfDay()->diffInDays($fin->copy()->startOfDay()));
     }
 
     /** Estado calculado: al dia | en mora | por perder | (o el estado cerrado). */

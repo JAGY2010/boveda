@@ -166,10 +166,25 @@ class EmpenoController
         $this->guard($empeno);
         abort_if($empeno->estado !== 'activo', 422);
 
-        $valorRecibido = $r->filled('valor_recibido') ? (int) $r->input('valor_recibido') : null;
-        Ledger::retirar($empeno, $valorRecibido);
+        $r->validate(['fecha' => 'nullable|date|before_or_equal:today']);
 
-        return redirect()->route('empenos.index')->with('ok', 'Artículo entregado · el capital volvió a caja');
+        $valorRecibido = $r->filled('valor_recibido') ? (int) $r->input('valor_recibido') : null;
+        $fecha = $r->filled('fecha') ? $r->input('fecha') : null;
+        Ledger::retirar($empeno, $valorRecibido, $fecha);
+
+        // Vuelve al empeño: ahí queda la historia del artículo y el acta de entrega para firmar.
+        return redirect()->route('empenos.show', $empeno)
+            ->with('ok', 'Artículo entregado · el capital volvió a caja. Imprime el acta de entrega para que el cliente firme.');
+    }
+
+    /** Acta de entrega y paz y salvo: constancia firmada de que el cliente recibió su artículo. */
+    public function acta(Empeno $empeno)
+    {
+        $this->guard($empeno);
+        abort_if($empeno->estado !== 'retirado', 404);
+        $empeno->load('cliente', 'negocio', 'pagos');
+
+        return view('empenos.acta', compact('empeno'));
     }
 
     public function perder(Empeno $empeno)

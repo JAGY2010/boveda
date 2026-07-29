@@ -14,7 +14,7 @@ class ContabilidadController
         $verDinero = auth()->user()->puedeVerDinero();
 
         $movimientos = $verDinero ? $negocio->movimientos()->orderByDesc('id')->limit(15)->get() : collect();
-        $gastos = $negocio->gastos()->orderByDesc('id')->limit(15)->get();
+        $gastos = $negocio->gastos()->orderByDesc('fecha')->orderByDesc('id')->limit(15)->get();
 
         return view('contabilidad.index', compact('negocio', 'movimientos', 'gastos', 'verDinero'));
     }
@@ -47,9 +47,10 @@ class ContabilidadController
             'categoria' => 'required|string|max:100',
             'monto' => 'required|integer|min:1',
             'descripcion' => 'nullable|string|max:255',
+            'fecha' => 'nullable|date|before_or_equal:today',
         ]);
 
-        Ledger::registrarGasto($negocio, $data['categoria'], (int) $data['monto'], $data['descripcion'] ?? null);
+        Ledger::registrarGasto($negocio, $data['categoria'], (int) $data['monto'], $data['descripcion'] ?? null, $data['fecha'] ?? null);
 
         return back()->with('ok', 'Gasto registrado');
     }

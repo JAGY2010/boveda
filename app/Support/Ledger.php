@@ -141,9 +141,10 @@ class Ledger
     }
 
     /** El cliente retira: el capital regresa a caja (más el interés corrido). */
-    public static function retirar(Empeno $e, ?int $valorRecibido = null): void
+    public static function retirar(Empeno $e, ?int $valorRecibido = null, ?string $fecha = null): void
     {
-        DB::transaction(function () use ($e, $valorRecibido) {
+        DB::transaction(function () use ($e, $valorRecibido, $fecha) {
+            $fecha = $fecha ?: now()->toDateString();
             $saldo = (int) $e->saldo;
             $recibido = $valorRecibido ?? $e->deudaHoy();
             $interes = $recibido - $saldo; // ganancia real (puede diferir de lo esperado)
@@ -152,9 +153,15 @@ class Ledger
             $n->increment('caja', $recibido);
             $n->decrement('prestado', $saldo);
             $n->increment('acum_interes', $interes);
-            self::mov($n, "Retiro empeño #{$e->numero}", $recibido);
+            self::mov($n, "Retiro empeño #{$e->numero}", $recibido, $fecha);
 
-            $e->update(['estado' => 'retirado', 'saldo' => 0]);
+            // Se guardan fecha y valor para poder reconstruir la historia del artículo.
+            $e->update([
+                'estado' => 'retirado',
+                'saldo' => 0,
+                'fecha_retiro' => $fecha,
+                'valor_retiro' => $recibido,
+            ]);
         });
     }
 
@@ -213,18 +220,19 @@ class Ledger
         });
     }
 
-    public static function registrarGasto(Negocio $n, string $cat, int $monto, ?string $desc): void
+    public static function registrarGasto(Negocio $n, string $cat, int $monto, ?string $desc, ?string $fecha = null): void
     {
-        DB::transaction(function () use ($n, $cat, $monto, $desc) {
+        DB::transaction(function () use ($n, $cat, $monto, $desc, $fecha) {
+            $fecha = $fecha ?: now()->toDateString();
             $n->decrement('caja', $monto);
             $n->increment('acum_gastos', $monto);
             $n->gastos()->create([
                 'categoria' => $cat,
                 'monto' => $monto,
                 'descripcion' => $desc,
-                'fecha' => now()->toDateString(),
+                'fecha' => $fecha,
             ]);
-            self::mov($n, "Gasto ({$cat})".($desc ? ": {$desc}" : ''), -$monto);
+            self::mov($n, "Gasto ({$cat})".($desc ? ": {$desc}" : ''), -$monto, $fecha);
         });
     }
 

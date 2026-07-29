@@ -25,6 +25,49 @@
                     <x-kpi label="Meses sin pagar" :value="$activo ? $empeno->mesesSinPagar() : '—'" :sub="'límite: ' . $empeno->plazo" :accent="$activo && $empeno->mesesSinPagar() >= $empeno->plazo ? 'amber' : 'sky'" />
                 </div>
 
+                @if ($empeno->estado === 'retirado')
+                    @php
+                        $hPrincipal = (int) $empeno->principal;
+                        $hAbonos = $empeno->totalAbonos();
+                        $hIntPagos = $empeno->totalInteresPagos();
+                        $hIntRetiro = $empeno->interesRetiro();
+                        $hTotalInt = $empeno->totalIntereses();
+                        $hTotal = $empeno->totalPagado();
+                        $hDias = $empeno->diasEnPrenda();
+                        $hMeses = intdiv($hDias, 30);
+                        $hResto = $hDias % 30;
+                        $hTiempo = $hMeses > 0
+                            ? $hMeses.' '.($hMeses === 1 ? 'mes' : 'meses').($hResto > 0 ? ' y '.$hResto.' d.' : '')
+                            : $hDias.' días';
+                    @endphp
+                    <div class="rounded-xl border border-emerald-600/40 bg-emerald-500/5 p-5 shadow-sm">
+                        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Historia del artículo</p>
+                            <a href="{{ route('empenos.acta', $empeno) }}" target="_blank" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500">🧾 Acta de entrega</a>
+                        </div>
+                        <dl class="grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-2 sm:gap-x-6">
+                            <div class="flex justify-between border-b border-emerald-600/15 pb-1"><dt class="text-zinc-500">Lo dejó el</dt><dd class="font-semibold">{{ $empeno->inicio->format('d/m/Y') }}</dd></div>
+                            <div class="flex justify-between border-b border-emerald-600/15 pb-1"><dt class="text-zinc-500">Lo retiró el</dt><dd class="font-semibold">{{ $empeno->fecha_retiro ? $empeno->fecha_retiro->format('d/m/Y') : '—' }}</dd></div>
+                            <div class="flex justify-between border-b border-emerald-600/15 pb-1"><dt class="text-zinc-500">Tiempo en garantía</dt><dd class="font-semibold">{{ $hTiempo }}</dd></div>
+                            <div class="flex justify-between border-b border-emerald-600/15 pb-1"><dt class="text-zinc-500">Por cuánto lo dejó</dt><dd class="font-semibold tabular-nums">{{ cop($hPrincipal) }}</dd></div>
+                            <div class="flex justify-between border-b border-emerald-600/15 pb-1"><dt class="text-zinc-500">Intereses en {{ $empeno->pagos->count() }} pago(s)</dt><dd class="font-semibold tabular-nums">{{ cop($hIntPagos) }}</dd></div>
+                            <div class="flex justify-between border-b border-emerald-600/15 pb-1"><dt class="text-zinc-500">Abonos a capital</dt><dd class="font-semibold tabular-nums">{{ cop($hAbonos) }}</dd></div>
+                            <div class="flex justify-between border-b border-emerald-600/15 pb-1 sm:col-span-2"><dt class="text-zinc-500">Pago final para llevárselo <span class="text-zinc-400">(incluye {{ cop($hIntRetiro) }} de interés)</span></dt><dd class="font-semibold tabular-nums">{{ cop((int) $empeno->valor_retiro) }}</dd></div>
+                        </dl>
+                        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                            <div class="rounded-lg border border-emerald-600/30 bg-white px-4 py-3 text-center dark:bg-zinc-900">
+                                <div class="text-xs font-bold uppercase tracking-wide text-zinc-500">Total que pagó</div>
+                                <div class="text-2xl font-semibold tabular-nums text-zinc-900 dark:text-white">{{ cop($hTotal) }}</div>
+                            </div>
+                            <div class="rounded-lg border border-emerald-600/30 bg-white px-4 py-3 text-center dark:bg-zinc-900">
+                                <div class="text-xs font-bold uppercase tracking-wide text-zinc-500">Ganancia en intereses</div>
+                                <div class="text-2xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">{{ cop($hTotalInt) }}</div>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-zinc-500">Recibió {{ cop($hPrincipal) }} y pagó {{ cop($hTotal) }} en total.</p>
+                    </div>
+                @endif
+
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                     <p class="mb-3 text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Datos</p>
                     <dl class="grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-2">
@@ -174,6 +217,9 @@
                             <label class="mb-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Valor recibido</label>
                             <input type="text" inputmode="numeric" name="valor_recibido" id="retiroValor" value="{{ $empeno->deudaHoy($periodoActual) }}" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                             <p class="mt-1 text-xs text-zinc-400"><b>Ya incluye el interés que debe</b> — no registres el pago del mes aparte. Ajusta si recibiste otro valor.</p>
+                            <label class="mb-1 mt-3 block text-sm font-semibold text-zinc-600 dark:text-zinc-300">Fecha del retiro</label>
+                            <input type="date" name="fecha" value="{{ now()->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            <p class="mt-1 text-xs text-zinc-400">Hoy por defecto. Cámbiala si el retiro fue en otra fecha.</p>
                             <button type="submit" class="mt-3 w-full rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-400">Registrar retiro y entregar artículo</button>
                         </form>
                     </div>
@@ -228,7 +274,15 @@
                         <p class="mb-2 text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Estado</p>
                         <x-estado :estado="$empeno->estadoCalculado()" />
                         <p class="mt-3 text-sm text-zinc-500">Este empeño está cerrado.</p>
-                        <a href="{{ route('empenos.contrato', $empeno) }}" target="_blank" class="mt-3 inline-block rounded-lg border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">Ver contrato</a>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <a href="{{ route('empenos.contrato', $empeno) }}" target="_blank" class="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800">Ver contrato</a>
+                            @if ($empeno->estado === 'retirado')
+                                <a href="{{ route('empenos.acta', $empeno) }}" target="_blank" class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500">🧾 Acta de entrega</a>
+                            @endif
+                        </div>
+                        @if ($empeno->estado === 'retirado')
+                            <p class="mt-2 text-xs text-zinc-400">El acta es la constancia firmada de que el cliente recibió su artículo y quedaron a paz y salvo.</p>
+                        @endif
                     </div>
                 @endif
             </div>

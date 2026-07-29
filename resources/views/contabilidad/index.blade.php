@@ -64,14 +64,16 @@
                     <form method="POST" action="{{ route('contabilidad.gasto') }}" class="space-y-2">
                         @csrf
                         <input name="categoria" required placeholder="Arriendo, nómina, servicios…" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                        <input type="text" inputmode="numeric" name="monto" required placeholder="200.000" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                         <div class="flex gap-2">
-                            <input type="text" inputmode="numeric" name="monto" required placeholder="200.000" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                            <input type="date" name="fecha" value="{{ now()->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" title="Fecha del gasto" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
                             <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Guardar</button>
                         </div>
+                        <p class="text-xs text-zinc-400">Hoy por defecto. Cámbiala para registrar gastos de días anteriores.</p>
                     </form>
                     <ul class="mt-3 divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
                         @forelse ($gastos as $g)
-                            <li class="flex justify-between py-1.5"><span class="text-zinc-500">{{ $g->categoria }}{{ $g->descripcion ? ' · ' . $g->descripcion : '' }}</span><span class="font-semibold text-red-600 tabular-nums">{{ cop(-$g->monto) }}</span></li>
+                            <li class="flex justify-between py-1.5"><span class="text-zinc-500">{{ \Illuminate\Support\Carbon::parse($g->fecha)->format('d/m/Y') }} · {{ $g->categoria }}{{ $g->descripcion ? ' · ' . $g->descripcion : '' }}</span><span class="font-semibold text-red-600 tabular-nums">{{ cop(-$g->monto) }}</span></li>
                         @empty
                             <li class="py-1.5 text-zinc-400">Sin gastos</li>
                         @endforelse
