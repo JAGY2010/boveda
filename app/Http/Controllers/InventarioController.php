@@ -23,7 +23,7 @@ class InventarioController
         $data = $r->validate([
             'descripcion' => 'required|string|max:255',
             'costo' => 'required|integer|min:1',
-            'fecha_compra' => 'nullable|date|before_or_equal:today',
+            'fecha_compra' => 'nullable|date|before_or_equal:'.hoyLocal(),
         ]);
 
         if ((int) $data['costo'] > $negocio->caja) {
@@ -42,7 +42,7 @@ class InventarioController
 
         $data = $r->validate([
             'valor' => 'required|integer|min:1',
-            'fecha_venta' => 'nullable|date|before_or_equal:today',
+            'fecha_venta' => 'nullable|date|before_or_equal:'.hoyLocal(),
         ]);
 
         Ledger::vender($item, (int) $data['valor'], $data['fecha_venta'] ?? null);

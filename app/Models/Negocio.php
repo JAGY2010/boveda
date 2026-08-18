@@ -22,16 +22,46 @@ class Negocio extends Model
         'suspendido' => 'boolean',
     ];
 
-    public function users(): HasMany { return $this->hasMany(User::class); }
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
 
     /** Todos los usuarios con acceso al local (vía pivote negocio_user). */
-    public function usuarios(): BelongsToMany { return $this->belongsToMany(User::class); }
-    public function clientes(): HasMany { return $this->hasMany(Cliente::class); }
-    public function empenos(): HasMany { return $this->hasMany(Empeno::class); }
-    public function inventario(): HasMany { return $this->hasMany(InventarioItem::class); }
-    public function gastos(): HasMany { return $this->hasMany(Gasto::class); }
-    public function movimientos(): HasMany { return $this->hasMany(Movimiento::class); }
-    public function eliminaciones(): HasMany { return $this->hasMany(Eliminacion::class); }
+    public function usuarios(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class);
+    }
+
+    public function clientes(): HasMany
+    {
+        return $this->hasMany(Cliente::class);
+    }
+
+    public function empenos(): HasMany
+    {
+        return $this->hasMany(Empeno::class);
+    }
+
+    public function inventario(): HasMany
+    {
+        return $this->hasMany(InventarioItem::class);
+    }
+
+    public function gastos(): HasMany
+    {
+        return $this->hasMany(Gasto::class);
+    }
+
+    public function movimientos(): HasMany
+    {
+        return $this->hasMany(Movimiento::class);
+    }
+
+    public function eliminaciones(): HasMany
+    {
+        return $this->hasMany(Eliminacion::class);
+    }
 
     // ---- Suscripción (estado calculado en vivo desde suscripcion_hasta + suspendido) ----
 
@@ -42,7 +72,10 @@ class Negocio extends Model
             return null;
         }
 
-        return (int) now()->startOfDay()->diffInDays($this->suscripcion_hasta->startOfDay(), false);
+        // Hoy en hora local, no en UTC: si no, de noche la suscripcion
+        // parecia vencer un dia antes.
+        return (int) ahoraLocal()->startOfDay()
+            ->diffInDays($this->suscripcion_hasta->startOfDay(), false);
     }
 
     /** activa | por_vencer | vencida | suspendida (en ese orden de prioridad). */

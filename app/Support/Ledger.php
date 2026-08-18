@@ -39,7 +39,7 @@ class Ledger
                 'pct' => $data['pct'],
                 'plazo' => $data['plazo'],
                 'periodo' => $n->periodo ?: 'mensual',
-                'inicio' => $data['inicio'] ?? now()->toDateString(),
+                'inicio' => $data['inicio'] ?? hoyLocal(),
                 'meses_pagados' => 0,
                 'estado' => 'activo',
             ]);
@@ -98,7 +98,7 @@ class Ledger
     public static function pagarInteres(Empeno $e, ?int $interesRecibido = null, ?string $fecha = null): void
     {
         DB::transaction(function () use ($e, $interesRecibido, $fecha) {
-            $fecha = $fecha ?: now()->toDateString();
+            $fecha = $fecha ?: hoyLocal();
             $v = $interesRecibido ?? $e->interesMes();
             $e->increment('meses_pagados');
             $e->pagos()->create([
@@ -119,7 +119,7 @@ class Ledger
     public static function abonar(Empeno $e, int $abono, ?int $interesRecibido = null, ?string $fecha = null): void
     {
         DB::transaction(function () use ($e, $abono, $interesRecibido, $fecha) {
-            $fecha = $fecha ?: now()->toDateString();
+            $fecha = $fecha ?: hoyLocal();
             $abono = (int) min($abono, $e->saldo);
             $v = $interesRecibido ?? $e->interesMes();
 
@@ -144,7 +144,7 @@ class Ledger
     public static function retirar(Empeno $e, ?int $valorRecibido = null, ?string $fecha = null): void
     {
         DB::transaction(function () use ($e, $valorRecibido, $fecha) {
-            $fecha = $fecha ?: now()->toDateString();
+            $fecha = $fecha ?: hoyLocal();
             $saldo = (int) $e->saldo;
             $recibido = $valorRecibido ?? $e->deudaHoy();
             $interes = $recibido - $saldo; // ganancia real (puede diferir de lo esperado)
@@ -180,7 +180,7 @@ class Ledger
                 'costo' => $saldo,
                 'origen' => 'perdido',
                 'estado' => 'disponible',
-                'fecha_compra' => now()->toDateString(),
+                'fecha_compra' => hoyLocal(),
             ]);
 
             $e->update(['estado' => 'perdido']);
@@ -191,7 +191,7 @@ class Ledger
     public static function comprarDirecto(Negocio $n, string $desc, int $costo, ?string $fecha = null): void
     {
         DB::transaction(function () use ($n, $desc, $costo, $fecha) {
-            $fecha = $fecha ?: now()->toDateString();
+            $fecha = $fecha ?: hoyLocal();
             $n->decrement('caja', $costo);
             $n->increment('inventario_valor', $costo);
             $n->inventario()->create([
@@ -209,7 +209,7 @@ class Ledger
     public static function vender(InventarioItem $it, int $valor, ?string $fecha = null): void
     {
         DB::transaction(function () use ($it, $valor, $fecha) {
-            $fecha = $fecha ?: now()->toDateString();
+            $fecha = $fecha ?: hoyLocal();
             $n = $it->negocio;
             $n->increment('caja', $valor);
             $n->decrement('inventario_valor', $it->costo);
@@ -223,7 +223,7 @@ class Ledger
     public static function registrarGasto(Negocio $n, string $cat, int $monto, ?string $desc, ?string $fecha = null): void
     {
         DB::transaction(function () use ($n, $cat, $monto, $desc, $fecha) {
-            $fecha = $fecha ?: now()->toDateString();
+            $fecha = $fecha ?: hoyLocal();
             $n->decrement('caja', $monto);
             $n->increment('acum_gastos', $monto);
             $n->gastos()->create([
@@ -254,7 +254,7 @@ class Ledger
         $n->movimientos()->create([
             'descripcion' => $desc,
             'monto' => $monto,
-            'fecha' => $fecha ?: now()->toDateString(),
+            'fecha' => $fecha ?: hoyLocal(),
         ]);
     }
 }

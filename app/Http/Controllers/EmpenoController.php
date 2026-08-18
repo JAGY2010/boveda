@@ -6,6 +6,7 @@ use App\Models\Empeno;
 use App\Models\Pago;
 use App\Support\Ledger;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class EmpenoController
 {
@@ -81,8 +82,8 @@ class EmpenoController
             'principal' => 'required|integer|min:1',
             'pct' => 'required|numeric|min:0',
             'plazo' => 'required|integer|min:1',
-            'inicio' => 'nullable|date|before_or_equal:today',
-            'numero' => ['nullable', 'integer', 'min:1', \Illuminate\Validation\Rule::unique('empenos')->where(fn ($q) => $q->where('negocio_id', $negocio->id))],
+            'inicio' => 'nullable|date|before_or_equal:'.hoyLocal(),
+            'numero' => ['nullable', 'integer', 'min:1', Rule::unique('empenos')->where(fn ($q) => $q->where('negocio_id', $negocio->id))],
             'atributos' => 'nullable|array',
         ], [
             'numero.unique' => 'Ese número de contrato ya existe en este local.',
@@ -143,7 +144,7 @@ class EmpenoController
         $this->guard($empeno);
         abort_if($empeno->estado !== 'activo', 422);
 
-        $r->validate(['fecha' => 'nullable|date|before_or_equal:today']);
+        $r->validate(['fecha' => 'nullable|date|before_or_equal:'.hoyLocal()]);
 
         $abono = (int) $r->input('abono', 0);
         $interesRecibido = $r->filled('interes_recibido') ? (int) $r->input('interes_recibido') : null;
@@ -166,7 +167,7 @@ class EmpenoController
         $this->guard($empeno);
         abort_if($empeno->estado !== 'activo', 422);
 
-        $r->validate(['fecha' => 'nullable|date|before_or_equal:today']);
+        $r->validate(['fecha' => 'nullable|date|before_or_equal:'.hoyLocal()]);
 
         $valorRecibido = $r->filled('valor_recibido') ? (int) $r->input('valor_recibido') : null;
         $fecha = $r->filled('fecha') ? $r->input('fecha') : null;
@@ -203,10 +204,10 @@ class EmpenoController
         abort_unless(auth()->user()->puedeEditar(), 403);
 
         $data = $r->validate([
-            'numero' => ['required', 'integer', 'min:1', \Illuminate\Validation\Rule::unique('empenos')->where(fn ($q) => $q->where('negocio_id', $empeno->negocio_id))->ignore($empeno->id)],
-            'inicio' => ['required', 'date', 'before_or_equal:today'],
+            'numero' => ['required', 'integer', 'min:1', Rule::unique('empenos')->where(fn ($q) => $q->where('negocio_id', $empeno->negocio_id))->ignore($empeno->id)],
+            'inicio' => ['required', 'date', 'before_or_equal:'.hoyLocal()],
             'pct' => 'required|numeric|min:0',
-            'pct_desde' => 'nullable|date|before_or_equal:today',
+            'pct_desde' => 'nullable|date|before_or_equal:'.hoyLocal(),
             'articulo' => 'required|string|max:255',
             'serial' => 'nullable|string|max:255',
             'color' => 'nullable|string|max:100',
@@ -217,7 +218,7 @@ class EmpenoController
 
         // Si cambió el % y no dieron fecha, se marca desde hoy.
         $pctCambio = (float) $data['pct'] !== (float) $empeno->pct;
-        $pctDesde = $data['pct_desde'] ?? ($pctCambio ? now()->toDateString() : $empeno->pct_desde);
+        $pctDesde = $data['pct_desde'] ?? ($pctCambio ? hoyLocal() : $empeno->pct_desde);
 
         $empeno->update([
             'numero' => (int) $data['numero'],

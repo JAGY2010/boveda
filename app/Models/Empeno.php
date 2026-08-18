@@ -77,7 +77,16 @@ class Empeno extends Model
      */
     public function interesCorrido(?string $periodo = null): int
     {
-        $dias = (int) $this->cubiertoHasta()->startOfDay()->diffInDays(now()->startOfDay(), false);
+        /* `cubiertoHasta()` sale de `inicio`, que es un cast 'date': una
+           fecha de calendario SIN hora, que no se convierte de zona. Lo
+           que si habia que arreglar es el otro lado: `now()` devolvia UTC
+           y a partir de las 7 p.m. contaba un dia de mas.
+
+           Como abajo se redondea HACIA ARRIBA al bloque, ese dia de mas
+           podia saltar un bloque entero: el cliente que llegaba el dia
+           justo en que se cumplia su mes terminaba pagando dos. */
+        $dias = (int) $this->cubiertoHasta()->startOfDay()
+            ->diffInDays(ahoraLocal()->startOfDay(), false);
         if ($dias <= 0) {
             return 0;
         }
@@ -99,7 +108,7 @@ class Empeno extends Model
     /** Meses acumulados sin pagar (seguidos o no). */
     public function mesesSinPagar(): int
     {
-        $transcurridos = (int) $this->inicio->diffInMonths(now());
+        $transcurridos = (int) $this->inicio->diffInMonths(ahoraLocal());
 
         return max(0, $transcurridos - $this->meses_pagados);
     }
@@ -148,9 +157,12 @@ class Empeno extends Model
     /** Días que el artículo estuvo en el negocio. */
     public function diasEnPrenda(): int
     {
-        $fin = $this->fecha_retiro ?: now();
+        /* `fecha_retiro` es cast 'date'; si no hay retiro se usa hoy en
+           hora local, no en UTC. */
+        $fin = $this->fecha_retiro ?: ahoraLocal();
 
-        return max(0, (int) $this->inicio->startOfDay()->diffInDays($fin->copy()->startOfDay()));
+        return max(0, (int) $this->inicio->startOfDay()
+            ->diffInDays($fin->copy()->startOfDay()));
     }
 
     /** Estado calculado: al dia | en mora | por perder | (o el estado cerrado). */

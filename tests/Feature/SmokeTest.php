@@ -4,10 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\Cliente;
 use App\Models\Empeno;
+use App\Models\Gasto;
+use App\Models\InventarioItem;
 use App\Models\Negocio;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -208,14 +212,14 @@ class SmokeTest extends TestCase
         ];
 
         foreach ($casos as [$dias, $esperado]) {
-            $e->inicio = now()->subDays($dias);
+            $e->inicio = ahoraLocal()->subDays($dias);
             $this->assertEquals($esperado, $e->interesCorrido(), "a los {$dias} días");
         }
 
         // Caso real del cliente: saldo 13.6M al 4%, 17 días -> 308.300.
         $e->update(['saldo' => 13600000, 'pct' => 4, 'meses_pagados' => 0]);
         $e->refresh();
-        $e->inicio = now()->subDays(17);
+        $e->inicio = ahoraLocal()->subDays(17);
         $this->assertEquals(544000, $e->interesMes());
         $this->assertEquals(308300, $e->interesCorrido());
     }
@@ -228,7 +232,7 @@ class SmokeTest extends TestCase
         $e->refresh();
         $this->assertEquals(544000, $e->interesMes()); // interés MENSUAL
 
-        $e->inicio = now()->subDays(17); // 17 días transcurridos
+        $e->inicio = ahoraLocal()->subDays(17); // 17 días transcurridos
 
         $e->periodo = 'diario';
         $this->assertEquals(308300, $e->interesCorrido());   // por día exacto: 544000/30*17
@@ -243,13 +247,13 @@ class SmokeTest extends TestCase
         $this->assertEquals(544000, $e->interesCorrido());   // mes completo
 
         // Quincenal a los 10 días: cobra los 15 completos "así no se hayan cumplido".
-        $e->inicio = now()->subDays(10);
+        $e->inicio = ahoraLocal()->subDays(10);
         $e->periodo = 'quincenal';
         $this->assertEquals(272000, $e->interesCorrido());   // 544000/30*15
 
         // El vencimiento sigue siendo MENSUAL (no cambia con el período de cobro).
         $e->periodo = 'semanal';
-        $e->inicio = \Illuminate\Support\Carbon::parse('2026-01-15');
+        $e->inicio = Carbon::parse('2026-01-15');
         $e->plazo = 4;
         $e->meses_pagados = 0;
         $this->assertEquals('2026-05-15', $e->vencimiento()->toDateString());
@@ -261,7 +265,7 @@ class SmokeTest extends TestCase
         $e = Empeno::where('estado', 'activo')->firstOrFail();
         $e->update(['saldo' => 13600000, 'pct' => 4, 'meses_pagados' => 0, 'periodo' => 'diario']);
         $e->refresh();
-        $e->inicio = now()->subDays(17);
+        $e->inicio = ahoraLocal()->subDays(17);
 
         // El empeño es 'diario', pero el retiro puede elegir otro bloque solo para ese cobro.
         $this->assertEquals(308300, $e->interesCorrido());              // su período: día exacto
@@ -318,7 +322,7 @@ class SmokeTest extends TestCase
         $dueno = $this->owner();
         $e = Empeno::where('estado', 'activo')->firstOrFail();
         $e->pagos()->delete(); // partimos de un empeño limpio (el seeder trae pagos)
-        $e->update(['principal' => 1000000, 'saldo' => 1000000, 'pct' => 5, 'meses_pagados' => 0, 'inicio' => now()->subMonths(3)->toDateString()]);
+        $e->update(['principal' => 1000000, 'saldo' => 1000000, 'pct' => 5, 'meses_pagados' => 0, 'inicio' => ahoraLocal()->subMonths(3)->toDateString()]);
 
         // Un pago de solo interés y otro con abono a capital.
         $this->actingAs($dueno)->post("/empenos/{$e->id}/pago", ['interes_recibido' => 50000])->assertRedirect();
@@ -328,7 +332,7 @@ class SmokeTest extends TestCase
         $this->assertEquals(800000, (int) $e->saldo); // 1.000.000 − 200.000 de abono
 
         // Retiro: paga el saldo restante + 40.000 de interés final.
-        $fechaRetiro = now()->toDateString();
+        $fechaRetiro = hoyLocal();
         $this->actingAs($dueno)->post("/empenos/{$e->id}/retirar", ['valor_recibido' => 840000, 'fecha' => $fechaRetiro])->assertRedirect();
 
         $e->refresh()->load('pagos');
@@ -359,23 +363,23 @@ class SmokeTest extends TestCase
     public function test_gasto_con_fecha(): void
     {
         $dueno = $this->owner();
-        $ayer = now()->subDays(10)->toDateString();
+        $ayer = ahoraLocal()->subDays(10)->toDateString();
 
         $this->actingAs($dueno)->post('/contabilidad/gasto', [
             'categoria' => 'Arriendo', 'monto' => 300000, 'fecha' => $ayer,
         ])->assertRedirect();
 
-        $g = \App\Models\Gasto::where('categoria', 'Arriendo')->firstOrFail();
+        $g = Gasto::where('categoria', 'Arriendo')->firstOrFail();
         $this->assertEquals(300000, (int) $g->monto);
         $this->assertEquals($ayer, $g->fecha->toDateString());
 
         // Sin fecha explícita queda con la de hoy.
         $this->actingAs($dueno)->post('/contabilidad/gasto', ['categoria' => 'Servicios', 'monto' => 50000])->assertRedirect();
-        $this->assertEquals(now()->toDateString(), \App\Models\Gasto::where('categoria', 'Servicios')->firstOrFail()->fecha->toDateString());
+        $this->assertEquals(hoyLocal(), Gasto::where('categoria', 'Servicios')->firstOrFail()->fecha->toDateString());
 
         // No se aceptan fechas futuras.
         $this->actingAs($dueno)->post('/contabilidad/gasto', [
-            'categoria' => 'Futuro', 'monto' => 1000, 'fecha' => now()->addDay()->toDateString(),
+            'categoria' => 'Futuro', 'monto' => 1000, 'fecha' => ahoraLocal()->addDay()->toDateString(),
         ])->assertSessionHasErrors('fecha');
     }
 
@@ -387,7 +391,7 @@ class SmokeTest extends TestCase
 
         // Vencer todos los locales del dueño (ayer) -> queda bloqueado sin importar el activo.
         Negocio::whereIn('id', $dueno->accessibleNegocioIds())
-            ->update(['suscripcion_hasta' => now()->subDay()->toDateString()]);
+            ->update(['suscripcion_hasta' => ahoraLocal()->subDay()->toDateString()]);
 
         $this->actingAs($dueno)->get('/dashboard')->assertRedirect(route('suscripcion.bloqueada'));
         $this->actingAs($dueno)->get(route('suscripcion.bloqueada'))->assertOk();
@@ -402,10 +406,10 @@ class SmokeTest extends TestCase
     {
         $admin = $this->admin();
         $local = Negocio::query()->first();
-        $local->update(['suscripcion_hasta' => now()->subDay()->toDateString(), 'suspendido' => false]);
+        $local->update(['suscripcion_hasta' => ahoraLocal()->subDay()->toDateString(), 'suspendido' => false]);
 
         // Fijar la fecha de vencimiento (calendario) -> activa, y reactiva.
-        $fecha = now()->addMonths(2)->toDateString();
+        $fecha = ahoraLocal()->addMonths(2)->toDateString();
         $this->actingAs($admin)->post(route('admin.locales.renovar', $local), ['fecha' => $fecha])->assertRedirect();
         $local->refresh();
         $this->assertEquals($fecha, $local->suscripcion_hasta->toDateString());
@@ -413,7 +417,7 @@ class SmokeTest extends TestCase
 
         // Fecha en el pasado -> rechazada.
         $this->actingAs($admin)
-            ->post(route('admin.locales.renovar', $local), ['fecha' => now()->subDay()->toDateString()])
+            ->post(route('admin.locales.renovar', $local), ['fecha' => ahoraLocal()->subDay()->toDateString()])
             ->assertSessionHasErrors('fecha');
 
         // Suspender -> bloqueada; Reactivar -> deja de estarlo.
@@ -507,7 +511,7 @@ class SmokeTest extends TestCase
     public function test_empeno_con_fecha_de_inicio_pasada(): void
     {
         $dueno = $this->owner();
-        $fecha = now()->subMonths(2)->toDateString();
+        $fecha = ahoraLocal()->subMonths(2)->toDateString();
 
         $this->actingAs($dueno)->post('/empenos', [
             'nuevo_nombre' => 'Antiguo', 'nuevo_cedula' => '77777',
@@ -522,7 +526,7 @@ class SmokeTest extends TestCase
         $this->actingAs($dueno)->post('/empenos', [
             'nuevo_nombre' => 'Futuro', 'nuevo_cedula' => '66666',
             'categoria' => 'Otro', 'principal' => 100000, 'pct' => 20, 'plazo' => 4,
-            'inicio' => now()->addDay()->toDateString(),
+            'inicio' => ahoraLocal()->addDay()->toDateString(),
         ])->assertSessionHasErrors('inicio');
     }
 
@@ -585,7 +589,7 @@ class SmokeTest extends TestCase
     {
         $dueno = $this->owner();
         $empeno = Empeno::where('estado', 'activo')->firstOrFail();
-        $fecha = now()->subMonth()->toDateString();
+        $fecha = ahoraLocal()->subMonth()->toDateString();
 
         $this->actingAs($dueno)->post("/empenos/{$empeno->id}/pago", ['fecha' => $fecha])->assertRedirect();
 
@@ -602,7 +606,7 @@ class SmokeTest extends TestCase
             'nombre' => $negocio->nombre,
             'plazo_default' => 4, 'periodo' => 'mensual', 'pct_default' => 20, 'ltv_default' => 50,
             'consecutivo_inicial' => 1,
-            'logo' => \Illuminate\Http\UploadedFile::fake()->image('logo.png', 80, 80),
+            'logo' => UploadedFile::fake()->image('logo.png', 80, 80),
         ])->assertRedirect();
 
         $this->assertStringStartsWith('data:image/', (string) $negocio->fresh()->logo_data);
@@ -640,7 +644,7 @@ class SmokeTest extends TestCase
         $dueno = $this->owner();
         $empleado = User::where('email', 'empleado@boveda.test')->firstOrFail();
         $empeno = Empeno::where('estado', 'activo')->firstOrFail();
-        $nuevaFecha = now()->subMonths(3)->toDateString();
+        $nuevaFecha = ahoraLocal()->subMonths(3)->toDateString();
 
         // El empleado no puede editar el número/fecha
         $this->actingAs($empleado)->put("/empenos/{$empeno->id}/datos", [
@@ -666,16 +670,16 @@ class SmokeTest extends TestCase
     public function test_inventario_guarda_fechas_compra_venta(): void
     {
         $dueno = $this->owner();
-        $fcompra = now()->subMonth()->toDateString();
+        $fcompra = ahoraLocal()->subMonth()->toDateString();
 
         $this->actingAs($dueno)->post('/inventario/comprar', [
             'descripcion' => 'Bicicleta', 'costo' => 100000, 'fecha_compra' => $fcompra,
         ])->assertRedirect();
 
-        $item = \App\Models\InventarioItem::where('descripcion', 'Bicicleta')->firstOrFail();
+        $item = InventarioItem::where('descripcion', 'Bicicleta')->firstOrFail();
         $this->assertEquals($fcompra, $item->fecha_compra->toDateString());
 
-        $fventa = now()->subDays(5)->toDateString();
+        $fventa = ahoraLocal()->subDays(5)->toDateString();
         $this->actingAs($dueno)->post("/inventario/{$item->id}/vender", ['valor' => 150000, 'fecha_venta' => $fventa])->assertRedirect();
         $this->assertEquals($fventa, $item->fresh()->fecha_venta->toDateString());
     }

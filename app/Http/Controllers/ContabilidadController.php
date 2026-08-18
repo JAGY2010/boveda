@@ -47,7 +47,7 @@ class ContabilidadController
             'categoria' => 'required|string|max:100',
             'monto' => 'required|integer|min:1',
             'descripcion' => 'nullable|string|max:255',
-            'fecha' => 'nullable|date|before_or_equal:today',
+            'fecha' => 'nullable|date|before_or_equal:'.hoyLocal(),
         ]);
 
         Ledger::registrarGasto($negocio, $data['categoria'], (int) $data['monto'], $data['descripcion'] ?? null, $data['fecha'] ?? null);

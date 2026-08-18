@@ -24,7 +24,9 @@ class DashboardController
         $enMora = $activos->filter(fn ($e) => $e->estadoCalculado() === 'en mora')->count();
 
         $venceSemana = $activos->filter(function ($e) {
-            $d = now()->startOfDay()->diffInDays($e->vencimiento(), false);
+            // Hoy en hora local: con UTC, despues de las 7 p.m. la cuenta
+            // regresiva de vencimientos mostraba un dia menos.
+            $d = ahoraLocal()->startOfDay()->diffInDays($e->vencimiento(), false);
 
             return $d >= 0 && $d <= 7;
         })->count();

@@ -1,5 +1,9 @@
 <?php
 
+use App\Models\Negocio;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
+
 if (! function_exists('cop')) {
     /** Formatea un entero de pesos colombianos: 1234567 -> "$1.234.567". */
     function cop($n): string
@@ -133,7 +137,7 @@ if (! function_exists('numeroALetras')) {
 
 if (! function_exists('local')) {
     /** El local (negocio) activo del usuario: el seleccionado o el primero al que tiene acceso. */
-    function local(): ?\App\Models\Negocio
+    function local(): ?Negocio
     {
         $u = auth()->user();
         if (! $u) {
@@ -147,7 +151,7 @@ if (! function_exists('local')) {
 
         $sel = (int) session('local_id');
         if ($sel && in_array($sel, $ids, true)) {
-            return \App\Models\Negocio::find($sel);
+            return Negocio::find($sel);
         }
 
         // El admin no entra a ningún local por defecto: gestiona desde el panel
@@ -158,7 +162,67 @@ if (! function_exists('local')) {
 
         $default = ($u->negocio_id && in_array((int) $u->negocio_id, $ids, true)) ? (int) $u->negocio_id : $ids[0];
 
-        return \App\Models\Negocio::find($default);
+        return Negocio::find($default);
     }
 }
 
+/* =============================================================
+   LA FECHA, EN HORA DE COLOMBIA
+
+   Las fechas se guardan en UTC, y eso está bien: es lo correcto y lo
+   que espera Laravel. El problema no es cómo se guardan sino cómo se
+   COMPARAN.
+
+   `now()` devuelve UTC. Colombia va cinco horas atrás, así que a partir
+   de las 7 de la noche `now()->toDateString()` ya devuelve la fecha de
+   MAÑANA. Consecuencias medidas:
+
+     - Un abono recibido a las 8 p.m. se guarda con fecha del día
+       siguiente y no sale en el reporte del día.
+     - El interés corrido cuenta un día de más. Y como el cobro redondea
+       HACIA ARRIBA al bloque del local, ese día de más puede saltar un
+       bloque entero: un cliente que paga el día justo en que se cumple
+       su mes termina pagando dos.
+
+   Estas funciones NO cambian dónde ni cómo se guarda nada. Solo dicen
+   qué día es aquí.
+   ============================================================= */
+
+if (! function_exists('zonaLocal')) {
+    /** La zona donde opera el negocio. Configurable por si algún día se
+     *  vende en otro país. */
+    function zonaLocal(): string
+    {
+        return (string) config('app.zona_negocio', 'America/Bogota');
+    }
+}
+
+if (! function_exists('ahoraLocal')) {
+    /** El instante actual, visto desde la zona del negocio. */
+    function ahoraLocal(): CarbonInterface
+    {
+        return now()->setTimezone(zonaLocal());
+    }
+}
+
+if (! function_exists('hoyLocal')) {
+    /** Hoy como 'Y-m-d', en la zona del negocio.
+     *  Reemplaza a `now()->toDateString()`. */
+    function hoyLocal(): string
+    {
+        return ahoraLocal()->toDateString();
+    }
+}
+
+if (! function_exists('enLocal')) {
+    /** Pasa cualquier fecha a la zona del negocio, para poder compararla
+     *  con otra del mismo lado.
+     *
+     *  Comparar un `startOfDay()` en UTC contra otro en Colombia da
+     *  resultados que parecen correctos casi siempre y fallan de noche,
+     *  que es justo cuando nadie está revisando. */
+    function enLocal(DateTimeInterface $d): CarbonInterface
+    {
+        return Carbon::instance($d)->setTimezone(zonaLocal());
+    }
+}

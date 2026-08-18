@@ -69,6 +69,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Zona horaria del negocio
+    |--------------------------------------------------------------------------
+    |
+    | Las fechas se GUARDAN en UTC (arriba), que es lo correcto. Pero para
+    | saber "que dia es hoy" hay que preguntarselo al reloj de donde opera
+    | el local, no al de Greenwich: a partir de las 7 p.m. en Colombia, UTC
+    | ya esta en el dia siguiente.
+    |
+    | La usan hoyLocal(), ahoraLocal() y enLocal() en app/helpers.php.
+    |
+    */
+
+    'zona_negocio' => env('APP_ZONA_NEGOCIO', 'America/Bogota'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

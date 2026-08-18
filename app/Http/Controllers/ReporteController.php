@@ -16,13 +16,13 @@ class ReporteController
         $periodo = $r->query('periodo', 'hoy');
 
         [$desde, $hasta] = match ($periodo) {
-            'mes' => [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()],
-            'mespasado' => [now()->subMonthNoOverflow()->startOfMonth()->toDateString(), now()->subMonthNoOverflow()->endOfMonth()->toDateString()],
+            'mes' => [ahoraLocal()->startOfMonth()->toDateString(), ahoraLocal()->endOfMonth()->toDateString()],
+            'mespasado' => [ahoraLocal()->subMonthNoOverflow()->startOfMonth()->toDateString(), ahoraLocal()->subMonthNoOverflow()->endOfMonth()->toDateString()],
             'personalizado' => [
-                $r->query('desde') ?: now()->toDateString(),
-                $r->query('hasta') ?: now()->toDateString(),
+                $r->query('desde') ?: hoyLocal(),
+                $r->query('hasta') ?: hoyLocal(),
             ],
-            default => [now()->toDateString(), now()->toDateString()],
+            default => [hoyLocal(), hoyLocal()],
         };
 
         // Pagos (interés + abono a capital) en el rango.
