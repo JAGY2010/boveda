@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Empeno extends Model
 {
@@ -19,17 +21,20 @@ class Empeno extends Model
         'fecha_retiro' => 'date',
     ];
 
-    public function negocio()
+    /** @return BelongsTo<Negocio, $this> */
+    public function negocio(): BelongsTo
     {
         return $this->belongsTo(Negocio::class);
     }
 
-    public function cliente()
+    /** @return BelongsTo<Cliente, $this> */
+    public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class);
     }
 
-    public function pagos()
+    /** @return HasMany<Pago, $this> */
+    public function pagos(): HasMany
     {
         return $this->hasMany(Pago::class)->orderBy('fecha')->orderBy('id');
     }

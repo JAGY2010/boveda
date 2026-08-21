@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Bloquea las pantallas operativas de un local cuya suscripción está
@@ -12,7 +13,10 @@ use Illuminate\Http\Request;
  */
 class VerificarSuscripcion
 {
-    public function handle(Request $request, Closure $next)
+    /**
+     * @param  Closure(Request): Response  $next
+     */
+    public function handle(Request $request, Closure $next): Response
     {
         $user = auth()->user();
 

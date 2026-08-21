@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cliente extends Model
 {
@@ -10,12 +12,14 @@ class Cliente extends Model
 
     protected $guarded = [];
 
-    public function negocio()
+    /** @return BelongsTo<Negocio, $this> */
+    public function negocio(): BelongsTo
     {
         return $this->belongsTo(Negocio::class);
     }
 
-    public function empenos()
+    /** @return HasMany<Empeno, $this> */
+    public function empenos(): HasMany
     {
         return $this->hasMany(Empeno::class);
     }

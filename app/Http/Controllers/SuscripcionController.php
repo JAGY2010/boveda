@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
+
 class SuscripcionController
 {
     /** Pantalla que ve el dueño/empleado cuando el local está vencido o suspendido. */
-    public function bloqueada()
+    public function bloqueada(): View|RedirectResponse
     {
         $negocio = local();
 

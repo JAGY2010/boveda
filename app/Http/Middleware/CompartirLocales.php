@@ -4,14 +4,17 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class CompartirLocales
 {
     /**
      * Comparte con todas las vistas el local activo y los locales a los
      * que el usuario tiene acceso (para el selector y el menú).
+     *
+     * @param  Closure(Request): Response  $next
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
         if (auth()->check()) {
             $negocio = local();

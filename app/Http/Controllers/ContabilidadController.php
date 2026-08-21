@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Support\Ledger;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class ContabilidadController
 {
-    public function index()
+    public function index(): View
     {
         // El empleado ve solo la caja y puede registrar gastos; el dueño/admin ve todo.
         $negocio = local();
@@ -19,7 +21,7 @@ class ContabilidadController
         return view('contabilidad.index', compact('negocio', 'movimientos', 'gastos', 'verDinero'));
     }
 
-    public function capital(Request $r)
+    public function capital(Request $r): RedirectResponse
     {
         abort_unless(auth()->user()->puedeVerDinero(), 403);
         $negocio = local();
@@ -38,7 +40,7 @@ class ContabilidadController
         return back()->with('ok', 'Listo');
     }
 
-    public function gasto(Request $r)
+    public function gasto(Request $r): RedirectResponse
     {
         // El empleado también puede registrar gastos.
         $negocio = local();

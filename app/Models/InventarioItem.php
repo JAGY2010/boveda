@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventarioItem extends Model
 {
@@ -15,12 +16,14 @@ class InventarioItem extends Model
         'fecha_venta' => 'date',
     ];
 
-    public function negocio()
+    /** @return BelongsTo<Negocio, $this> */
+    public function negocio(): BelongsTo
     {
         return $this->belongsTo(Negocio::class);
     }
 
-    public function empeno()
+    /** @return BelongsTo<Empeno, $this> */
+    public function empeno(): BelongsTo
     {
         return $this->belongsTo(Empeno::class);
     }

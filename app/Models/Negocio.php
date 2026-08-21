@@ -22,42 +22,50 @@ class Negocio extends Model
         'suspendido' => 'boolean',
     ];
 
+    /** @return HasMany<User, $this> */
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
     }
 
     /** Todos los usuarios con acceso al local (vía pivote negocio_user). */
+    /** @return BelongsToMany<User, $this> */
     public function usuarios(): BelongsToMany
     {
         return $this->belongsToMany(User::class);
     }
 
+    /** @return HasMany<Cliente, $this> */
     public function clientes(): HasMany
     {
         return $this->hasMany(Cliente::class);
     }
 
+    /** @return HasMany<Empeno, $this> */
     public function empenos(): HasMany
     {
         return $this->hasMany(Empeno::class);
     }
 
+    /** @return HasMany<InventarioItem, $this> */
     public function inventario(): HasMany
     {
         return $this->hasMany(InventarioItem::class);
     }
 
+    /** @return HasMany<Gasto, $this> */
     public function gastos(): HasMany
     {
         return $this->hasMany(Gasto::class);
     }
 
+    /** @return HasMany<Movimiento, $this> */
     public function movimientos(): HasMany
     {
         return $this->hasMany(Movimiento::class);
     }
 
+    /** @return HasMany<Eliminacion, $this> */
     public function eliminaciones(): HasMany
     {
         return $this->hasMany(Eliminacion::class);

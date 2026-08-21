@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
+
 class DashboardController
 {
-    public function index()
+    public function index(): View|RedirectResponse
     {
         $negocio = local();
 

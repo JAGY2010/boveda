@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Negocio;
 use App\Models\User;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class LocalController
@@ -13,7 +15,7 @@ class LocalController
         abort_unless(auth()->user()->isAdmin(), 403);
     }
 
-    public function index()
+    public function index(): View
     {
         $this->guard();
         $locales = Negocio::withCount([
@@ -27,7 +29,7 @@ class LocalController
         return view('admin.locales.index', compact('locales'));
     }
 
-    public function show(Negocio $negocio)
+    public function show(Negocio $negocio): View
     {
         $this->guard();
         $usuarios = $negocio->usuarios()
@@ -38,7 +40,7 @@ class LocalController
         return view('admin.locales.show', compact('negocio', 'usuarios'));
     }
 
-    public function create()
+    public function create(): View
     {
         $this->guard();
         $duenos = User::where('role', 'owner')->orderBy('name')->get();
@@ -46,7 +48,7 @@ class LocalController
         return view('admin.locales.create', compact('duenos'));
     }
 
-    public function store(Request $r)
+    public function store(Request $r): RedirectResponse
     {
         $this->guard();
 
@@ -77,15 +79,17 @@ class LocalController
             'suspendido' => false,
         ]);
 
-        if (! empty($data['owner_id'])) {
-            User::find($data['owner_id'])->negocios()->syncWithoutDetaching([$negocio->id]);
+        // El id viene validado con exists:users,id, pero si el dueno se
+        // borra entre la validacion y esta linea, find() devuelve null.
+        if (! empty($data['owner_id']) && $dueno = User::find((int) $data['owner_id'])) {
+            $dueno->negocios()->syncWithoutDetaching([$negocio->id]);
         }
 
         return redirect()->route('admin.locales.index')->with('ok', 'Local creado: '.$negocio->nombre);
     }
 
     /** Fija la fecha de vencimiento (el admin la elige en el calendario) y reactiva el acceso. */
-    public function renovar(Request $r, Negocio $negocio)
+    public function renovar(Request $r, Negocio $negocio): RedirectResponse
     {
         $this->guard();
 
@@ -105,7 +109,7 @@ class LocalController
         return back()->with('ok', 'Suscripción de '.$negocio->nombre.' al día · vence '.$negocio->suscripcion_hasta->format('d/m/Y'));
     }
 
-    public function suspender(Negocio $negocio)
+    public function suspender(Negocio $negocio): RedirectResponse
     {
         $this->guard();
         $negocio->update(['suspendido' => true]);
@@ -113,7 +117,7 @@ class LocalController
         return back()->with('ok', $negocio->nombre.' quedó suspendido.');
     }
 
-    public function reactivar(Negocio $negocio)
+    public function reactivar(Negocio $negocio): RedirectResponse
     {
         $this->guard();
         $negocio->update(['suspendido' => false]);

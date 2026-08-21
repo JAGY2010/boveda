@@ -6,7 +6,10 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -62,28 +65,41 @@ class User extends Authenticatable implements PasskeyUser
 
     // ---- Negocio y roles ----
 
-    public function negocio()
+    /** @return BelongsTo<Negocio, $this> */
+    public function negocio(): BelongsTo
     {
         return $this->belongsTo(Negocio::class);
     }
 
-    /** Locales a los que el usuario tiene acceso (un dueño puede tener varios). */
-    public function negocios()
+    /**
+     * Locales a los que el usuario tiene acceso (un dueño puede tener varios).
+     *
+     * @return BelongsToMany<Negocio, $this>
+     */
+    public function negocios(): BelongsToMany
     {
         return $this->belongsToMany(Negocio::class);
     }
 
-    /** IDs de los locales que puede ver: el admin ve todos. */
+    /**
+     * IDs de los locales que puede ver: el admin ve todos.
+     *
+     * Se normalizan a int porque el driver puede devolverlos como string
+     * (Postgres lo hace) y quien los recibe los compara con ===.
+     *
+     * @return array<int, int>
+     */
     public function accessibleNegocioIds(): array
     {
-        if ($this->isAdmin()) {
-            return Negocio::query()->pluck('id')->all();
-        }
+        $ids = $this->isAdmin()
+            ? Negocio::query()->pluck('id')
+            : $this->negocios()->pluck('negocios.id');
 
-        return $this->negocios()->pluck('negocios.id')->all();
+        return $ids->map(fn ($id): int => (int) $id)->values()->all();
     }
 
-    public function accessibleNegocios()
+    /** @return Collection<int, Negocio> */
+    public function accessibleNegocios(): Collection
     {
         if ($this->isAdmin()) {
             return Negocio::query()->orderBy('nombre')->get();

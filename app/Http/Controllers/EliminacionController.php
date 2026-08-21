@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Contracts\View\View;
+
 class EliminacionController
 {
     /** Historial de empeños eliminados: solo el dueño (y admin). */
-    public function index()
+    public function index(): View
     {
         abort_unless(auth()->user()->puedeEditar(), 403);
 

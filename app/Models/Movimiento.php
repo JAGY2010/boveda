@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Movimiento extends Model
 {
@@ -14,7 +15,8 @@ class Movimiento extends Model
         'fecha' => 'date',
     ];
 
-    public function negocio()
+    /** @return BelongsTo<Negocio, $this> */
+    public function negocio(): BelongsTo
     {
         return $this->belongsTo(Negocio::class);
     }

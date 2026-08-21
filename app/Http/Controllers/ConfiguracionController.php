@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class ConfiguracionController
@@ -12,7 +14,7 @@ class ConfiguracionController
         abort_unless(auth()->user()->puedeEditar(), 403);
     }
 
-    public function edit()
+    public function edit(): View
     {
         $this->guard();
         $negocio = local();
@@ -20,7 +22,7 @@ class ConfiguracionController
         return view('configuracion.edit', compact('negocio'));
     }
 
-    public function update(Request $r)
+    public function update(Request $r): RedirectResponse
     {
         $this->guard();
         $negocio = local();
@@ -45,7 +47,9 @@ class ConfiguracionController
         if ($r->hasFile('logo')) {
             $file = $r->file('logo');
             // Guardar el logo dentro de la BD (base64) para que NO se pierda en cada despliegue.
-            $data['logo_data'] = 'data:'.$file->getMimeType().';base64,'.base64_encode(file_get_contents($file->getRealPath()));
+            // getContent() lanza si no puede leer; file_get_contents devolvia
+            // false y base64_encode(false) es un TypeError en PHP 8.
+            $data['logo_data'] = 'data:'.$file->getMimeType().';base64,'.base64_encode($file->getContent());
         }
 
         $negocio->update(array_merge($data, [

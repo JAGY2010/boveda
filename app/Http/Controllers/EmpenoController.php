@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Empeno;
 use App\Models\Pago;
 use App\Support\Ledger;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class EmpenoController
 {
-    public function index(Request $r)
+    public function index(Request $r): View
     {
         $negocio = local();
         $q = trim((string) $r->query('q', ''));
@@ -54,7 +56,7 @@ class EmpenoController
         return view('empenos.index', compact('empenos', 'q', 'estado', 'counts'));
     }
 
-    public function create()
+    public function create(): View
     {
         $negocio = local();
         $clientes = $negocio->clientes()->orderBy('nombre')->get();
@@ -63,7 +65,7 @@ class EmpenoController
         return view('empenos.create', compact('negocio', 'clientes', 'proximoNumero'));
     }
 
-    public function store(Request $r)
+    public function store(Request $r): RedirectResponse
     {
         $negocio = local();
 
@@ -131,7 +133,7 @@ class EmpenoController
         return redirect()->route('empenos.show', $empeno)->with('ok', 'Empeño registrado');
     }
 
-    public function show(Empeno $empeno)
+    public function show(Empeno $empeno): View
     {
         $this->guard($empeno);
         $empeno->load('cliente', 'pagos');
@@ -139,7 +141,7 @@ class EmpenoController
         return view('empenos.show', compact('empeno'));
     }
 
-    public function pago(Request $r, Empeno $empeno)
+    public function pago(Request $r, Empeno $empeno): RedirectResponse
     {
         $this->guard($empeno);
         abort_if($empeno->estado !== 'activo', 422);
@@ -162,7 +164,7 @@ class EmpenoController
             ->with('ok', 'Pago registrado · nuevo vencimiento '.$empeno->vencimiento()->format('d/m/Y'));
     }
 
-    public function retirar(Request $r, Empeno $empeno)
+    public function retirar(Request $r, Empeno $empeno): RedirectResponse
     {
         $this->guard($empeno);
         abort_if($empeno->estado !== 'activo', 422);
@@ -179,7 +181,7 @@ class EmpenoController
     }
 
     /** Acta de entrega y paz y salvo: constancia firmada de que el cliente recibió su artículo. */
-    public function acta(Empeno $empeno)
+    public function acta(Empeno $empeno): View
     {
         $this->guard($empeno);
         abort_if($empeno->estado !== 'retirado', 404);
@@ -188,7 +190,7 @@ class EmpenoController
         return view('empenos.acta', compact('empeno'));
     }
 
-    public function perder(Empeno $empeno)
+    public function perder(Empeno $empeno): RedirectResponse
     {
         $this->guard($empeno);
         abort_if($empeno->estado !== 'activo', 422);
@@ -198,7 +200,7 @@ class EmpenoController
     }
 
     /** Editar el número de contrato y la fecha de inicio (para corregir migraciones). Solo dueño/admin. */
-    public function actualizarDatos(Request $r, Empeno $empeno)
+    public function actualizarDatos(Request $r, Empeno $empeno): RedirectResponse
     {
         $this->guard($empeno);
         abort_unless(auth()->user()->puedeEditar(), 403);
@@ -235,7 +237,7 @@ class EmpenoController
     }
 
     /** Deshacer un pago mal registrado (solo dueño/admin): revierte el valor y el mes. */
-    public function deshacerPago(Pago $pago)
+    public function deshacerPago(Pago $pago): RedirectResponse
     {
         $empeno = $pago->empeno;
         $this->guard($empeno);
@@ -248,7 +250,7 @@ class EmpenoController
     }
 
     /** Eliminar un empeño creado por error: solo el dueño; queda en el historial. */
-    public function destroy(Request $r, Empeno $empeno)
+    public function destroy(Request $r, Empeno $empeno): RedirectResponse
     {
         $this->guard($empeno);
         abort_unless(auth()->user()->puedeEditar(), 403);
@@ -273,7 +275,7 @@ class EmpenoController
         return redirect()->route('empenos.index')->with('ok', 'Empeño eliminado · el capital volvió a caja.');
     }
 
-    public function contrato(Empeno $empeno)
+    public function contrato(Empeno $empeno): View
     {
         $this->guard($empeno);
         $empeno->load('cliente', 'negocio', 'pagos');
@@ -282,7 +284,7 @@ class EmpenoController
     }
 
     /** Recibo imprimible de un pago (comprobante para el cliente). */
-    public function recibo(Pago $pago)
+    public function recibo(Pago $pago): View
     {
         $empeno = $pago->empeno;
         $this->guard($empeno);

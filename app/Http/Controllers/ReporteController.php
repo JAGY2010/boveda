@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pago;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
 class ReporteController
 {
     /** Reporte de actividad por período (solo dueño/admin). */
-    public function index(Request $r)
+    public function index(Request $r): View
     {
         abort_unless(auth()->user()->puedeVerDinero(), 403);
 

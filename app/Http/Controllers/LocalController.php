@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class LocalController
 {
     /** Cambiar el local activo (guardado en sesión). */
-    public function cambiar(Request $r)
+    public function cambiar(Request $r): RedirectResponse
     {
         $id = (int) $r->input('local_id');
 
@@ -19,7 +20,7 @@ class LocalController
     }
 
     /** Salir del local activo (el admin vuelve al panel). */
-    public function salir()
+    public function salir(): RedirectResponse
     {
         session()->forget('local_id');
 

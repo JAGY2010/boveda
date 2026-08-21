@@ -6,7 +6,7 @@ use Carbon\CarbonInterface;
 
 if (! function_exists('cop')) {
     /** Formatea un entero de pesos colombianos: 1234567 -> "$1.234.567". */
-    function cop($n): string
+    function cop(int|float|string|null $n): string
     {
         $n = (int) round((float) $n);
 
@@ -54,7 +54,7 @@ if (! function_exists('periodoLabelPlural')) {
 
 if (! function_exists('redondearCien')) {
     /** Redondea al cien más cercano (49 abajo, 50 arriba). Ej: 308266 -> 308300; 308245 -> 308200. */
-    function redondearCien($n): int
+    function redondearCien(int|float|string $n): int
     {
         return (int) (round(((float) $n) / 100) * 100);
     }

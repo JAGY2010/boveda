@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class EquipoController
@@ -13,7 +15,7 @@ class EquipoController
         abort_unless(auth()->user()->puedeEditar() && local(), 403);
     }
 
-    public function index()
+    public function index(): View
     {
         $this->guard();
         $local = local();
@@ -26,14 +28,14 @@ class EquipoController
         return view('equipo.index', compact('empleados', 'local'));
     }
 
-    public function create()
+    public function create(): View
     {
         $this->guard();
 
         return view('equipo.create', ['local' => local()]);
     }
 
-    public function store(Request $r)
+    public function store(Request $r): RedirectResponse
     {
         $this->guard();
         $local = local();

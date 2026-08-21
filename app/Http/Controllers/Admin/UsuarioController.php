@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Negocio;
 use App\Models\User;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class UsuarioController
@@ -13,7 +15,7 @@ class UsuarioController
         abort_unless(auth()->user()->isAdmin(), 403);
     }
 
-    public function index(Request $r)
+    public function index(Request $r): View
     {
         $this->guard();
 
@@ -37,7 +39,7 @@ class UsuarioController
     }
 
     /** El admin restablece (coloca una nueva) contraseña de cualquier usuario. */
-    public function resetPassword(Request $r, User $usuario)
+    public function resetPassword(Request $r, User $usuario): RedirectResponse
     {
         $this->guard();
 
@@ -50,7 +52,7 @@ class UsuarioController
         return back()->with('ok', 'Contraseña de '.$usuario->name.' actualizada.');
     }
 
-    public function create()
+    public function create(): View
     {
         $this->guard();
         $locales = Negocio::orderBy('nombre')->get();
@@ -58,7 +60,7 @@ class UsuarioController
         return view('admin.usuarios.create', compact('locales'));
     }
 
-    public function store(Request $r)
+    public function store(Request $r): RedirectResponse
     {
         $this->guard();
 

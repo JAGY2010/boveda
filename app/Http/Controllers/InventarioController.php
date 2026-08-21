@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\InventarioItem;
 use App\Support\Ledger;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class InventarioController
 {
-    public function index()
+    public function index(): View
     {
         $negocio = local();
         $disponibles = $negocio->inventario()->where('estado', 'disponible')->orderByDesc('id')->get();
@@ -17,7 +19,7 @@ class InventarioController
         return view('inventario.index', compact('negocio', 'disponibles', 'vendidos'));
     }
 
-    public function comprar(Request $r)
+    public function comprar(Request $r): RedirectResponse
     {
         $negocio = local();
         $data = $r->validate([
@@ -35,7 +37,7 @@ class InventarioController
         return redirect()->route('inventario.index')->with('ok', 'Comprado · pasó a inventario');
     }
 
-    public function vender(Request $r, InventarioItem $item)
+    public function vender(Request $r, InventarioItem $item): RedirectResponse
     {
         abort_if(! in_array($item->negocio_id, auth()->user()->accessibleNegocioIds()), 403);
         abort_if($item->estado !== 'disponible', 422);

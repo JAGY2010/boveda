@@ -15,7 +15,11 @@ use Illuminate\Support\Facades\DB;
  */
 class Ledger
 {
-    /** Nuevo empeño: sale de caja hacia "prestado". */
+    /**
+     * Nuevo empeño: sale de caja hacia "prestado".
+     *
+     * @param  array<string, mixed>  $data
+     */
     public static function crearEmpeno(Negocio $n, int $clienteId, array $data): Empeno
     {
         return DB::transaction(function () use ($n, $clienteId, $data) {
