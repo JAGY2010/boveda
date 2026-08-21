@@ -13,6 +13,7 @@ use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LocalController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\SeparadoController;
 use App\Http\Controllers\SuscripcionController;
 use App\Http\Middleware\CompartirLocales;
 use App\Http\Middleware\VerificarSuscripcion;
@@ -56,6 +57,14 @@ Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscrip
     Route::get('inventario', [InventarioController::class, 'index'])->name('inventario.index');
     Route::post('inventario/comprar', [InventarioController::class, 'comprar'])->name('inventario.comprar');
     Route::post('inventario/{item}/vender', [InventarioController::class, 'vender'])->name('inventario.vender');
+
+    // Separados (apartados): se abona hasta completar el precio y se entrega.
+    Route::post('inventario/{item}/separar', [SeparadoController::class, 'store'])->name('separados.store');
+    Route::get('separados/{separado}', [SeparadoController::class, 'show'])->name('separados.show');
+    Route::post('separados/{separado}/abonar', [SeparadoController::class, 'abonar'])->name('separados.abonar');
+    Route::post('separados/{separado}/entregar', [SeparadoController::class, 'entregar'])->name('separados.entregar');
+    Route::post('separados/{separado}/cancelar', [SeparadoController::class, 'cancelar'])->name('separados.cancelar');
+    Route::get('separados/abonos/{abono}/recibo', [SeparadoController::class, 'recibo'])->name('separados.recibo');
 
     Route::get('contabilidad', [ContabilidadController::class, 'index'])->name('contabilidad.index');
     Route::post('contabilidad/capital', [ContabilidadController::class, 'capital'])->name('contabilidad.capital');

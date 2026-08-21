@@ -6,6 +6,7 @@ use App\Models\Empeno;
 use App\Models\InventarioItem;
 use App\Models\Negocio;
 use App\Models\Pago;
+use App\Models\Separado;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -221,6 +222,100 @@ class Ledger
             self::mov($n, "Venta: {$it->descripcion}", $valor, $fecha);
 
             $it->update(['estado' => 'vendido', 'venta' => $valor, 'fecha_venta' => $fecha]);
+        });
+    }
+
+    /**
+     * Apartar un artículo para un cliente. El artículo sale de la venta
+     * normal pero SIGUE siendo del negocio: no se mueve plata todavía.
+     */
+    public static function separarArticulo(InventarioItem $it, int $clienteId, int $precio, ?string $fecha = null): Separado
+    {
+        return DB::transaction(function () use ($it, $clienteId, $precio, $fecha) {
+            $fecha = $fecha ?: hoyLocal();
+
+            $separado = $it->negocio->separados()->create([
+                'inventario_item_id' => $it->id,
+                'cliente_id' => $clienteId,
+                'precio' => $precio,
+                'abonado' => 0,
+                'estado' => 'activo',
+                'fecha_inicio' => $fecha,
+            ]);
+
+            $it->update(['estado' => 'separado']);
+
+            return $separado;
+        });
+    }
+
+    /**
+     * Abono de un separado: entra plata real a la caja, pero NO es ganancia
+     * todavía. Se anota en "abonos_separados" porque si el cliente desiste
+     * puede tocar devolverla, y el artículo sigue en el inventario.
+     */
+    public static function abonarSeparado(Separado $s, int $monto, ?string $fecha = null): void
+    {
+        DB::transaction(function () use ($s, $monto, $fecha) {
+            $fecha = $fecha ?: hoyLocal();
+            // Nunca se recibe de más: el tope es lo que falta.
+            $monto = (int) min($monto, $s->saldo());
+
+            $s->abonos()->create(['monto' => $monto, 'fecha' => $fecha]);
+            $s->increment('abonado', $monto);
+
+            $n = $s->negocio;
+            $n->increment('caja', $monto);
+            $n->increment('abonos_separados', $monto);
+            self::mov($n, "Abono separado: {$s->item->descripcion}", $monto, $fecha);
+        });
+    }
+
+    /**
+     * Entregar el artículo ya pagado. Aquí sí se reconoce la ganancia: el
+     * artículo sale del inventario y los abonos dejan de estar comprometidos.
+     * La caja no se toca: esa plata ya entró abono a abono.
+     */
+    public static function entregarSeparado(Separado $s, ?string $fecha = null): void
+    {
+        DB::transaction(function () use ($s, $fecha) {
+            $fecha = $fecha ?: hoyLocal();
+            $it = $s->item;
+            $abonado = (int) $s->abonado;
+
+            $n = $s->negocio;
+            $n->decrement('inventario_valor', (int) $it->costo);
+            $n->decrement('abonos_separados', $abonado);
+            $n->increment('acum_margen', $abonado - (int) $it->costo);
+            self::mov($n, "Entrega separado: {$it->descripcion}", 0, $fecha);
+
+            $it->update(['estado' => 'vendido', 'venta' => $abonado, 'fecha_venta' => $fecha]);
+            $s->update(['estado' => 'entregado', 'fecha_cierre' => $fecha]);
+        });
+    }
+
+    /**
+     * El cliente desiste. Cuánto se le devuelve lo decide quien atiende
+     * (puede ser todo, nada o lo que hayan negociado); lo que el negocio
+     * retiene sí es ganancia. El artículo vuelve a estar para vender.
+     */
+    public static function cancelarSeparado(Separado $s, int $devuelto, ?string $fecha = null): void
+    {
+        DB::transaction(function () use ($s, $devuelto, $fecha) {
+            $fecha = $fecha ?: hoyLocal();
+            $abonado = (int) $s->abonado;
+            $devuelto = (int) max(0, min($devuelto, $abonado));
+
+            $n = $s->negocio;
+            if ($devuelto > 0) {
+                $n->decrement('caja', $devuelto);
+                self::mov($n, "Devolución separado: {$s->item->descripcion}", -$devuelto, $fecha);
+            }
+            $n->decrement('abonos_separados', $abonado);
+            $n->increment('acum_margen', $abonado - $devuelto);
+
+            $s->item->update(['estado' => 'disponible']);
+            $s->update(['estado' => 'cancelado', 'fecha_cierre' => $fecha, 'devuelto' => $devuelto]);
         });
     }
 

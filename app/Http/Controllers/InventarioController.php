@@ -15,8 +15,12 @@ class InventarioController
         $negocio = local();
         $disponibles = $negocio->inventario()->where('estado', 'disponible')->orderByDesc('id')->get();
         $vendidos = $negocio->inventario()->where('estado', 'vendido')->orderByDesc('id')->get();
+        $separados = $negocio->separados()->with('cliente', 'item')
+            ->where('estado', 'activo')->orderByDesc('id')->get();
+        // Para el selector de cliente al separar (mismo patron que el empeno).
+        $clientes = $negocio->clientes()->orderBy('nombre')->get();
 
-        return view('inventario.index', compact('negocio', 'disponibles', 'vendidos'));
+        return view('inventario.index', compact('negocio', 'disponibles', 'vendidos', 'separados', 'clientes'));
     }
 
     public function comprar(Request $r): RedirectResponse

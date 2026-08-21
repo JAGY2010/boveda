@@ -71,6 +71,12 @@ class Negocio extends Model
         return $this->hasMany(Eliminacion::class);
     }
 
+    /** @return HasMany<Separado, $this> */
+    public function separados(): HasMany
+    {
+        return $this->hasMany(Separado::class);
+    }
+
     // ---- Suscripción (estado calculado en vivo desde suscripcion_hasta + suspendido) ----
 
     /** Días para el vencimiento: >0 quedan días, 0 vence hoy, <0 ya venció, null = sin control. */
@@ -129,10 +135,17 @@ class Negocio extends Model
         };
     }
 
-    /** Total invertido = las tres bolsas de capital de trabajo. */
+    /**
+     * Total invertido = las tres bolsas de capital de trabajo, menos lo que
+     * la caja debe.
+     *
+     * Los abonos de los separados ya entraron a caja, pero el articulo sigue
+     * contado en el inventario y esa plata podria haber que devolverla: sin
+     * restarla, el mismo valor se contaria dos veces.
+     */
     public function totalInvertido(): int
     {
-        return $this->caja + $this->prestado + $this->inventario_valor;
+        return $this->caja + $this->prestado + $this->inventario_valor - $this->abonos_separados;
     }
 
     public function gananciaBruta(): int
