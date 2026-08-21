@@ -16,7 +16,12 @@
 
         @if (auth()->user()->puedeVerDinero())
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <x-kpi label="Caja disponible" :value="cop($negocio->caja)" sub="efectivo en el negocio" accent="emerald" />
+                {{-- Parte de la caja puede ser de separados sin entregar: es plata
+                     recibida que todavia no es del negocio. --}}
+                <x-kpi label="Caja disponible" :value="cop($negocio->caja)"
+                       :sub="$negocio->abonos_separados > 0
+                            ? cop($negocio->abonos_separados) . ' es de separados'
+                            : 'efectivo en el negocio'" accent="emerald" />
                 <x-kpi label="Prestado" :value="cop($negocio->prestado)" :sub="$activos->count() . ' empeños activos'" accent="amber" />
                 <x-kpi label="Inventario" :value="cop($negocio->inventario_valor)" sub="artículos para vender" accent="zinc" />
                 <x-kpi label="Ganancia neta" :value="cop($negocio->gananciaNeta())" :sub="'bruta ' . cop($negocio->gananciaBruta())" accent="sky" />

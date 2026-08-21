@@ -307,6 +307,24 @@ class SeparadoTest extends TestCase
     }
 
     #[Test]
+    public function test_el_tablero_avisa_cuanto_de_la_caja_es_de_separados(): void
+    {
+        $sep = $this->separar(300000);
+
+        // Sin abonos, la caja es toda del negocio.
+        $this->actingAs($this->dueno)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('efectivo en el negocio');
+
+        $this->actingAs($this->empleado)->post(route('separados.abonar', $sep), ['monto' => 120000]);
+
+        // Con abonos, el duenno tiene que ver que parte de esa caja esta comprometida.
+        $this->actingAs($this->dueno)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee(cop(120000).' es de separados');
+    }
+
+    #[Test]
     public function test_la_pantalla_del_separado_carga(): void
     {
         $sep = $this->separar(300000, 80000);
