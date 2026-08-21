@@ -97,6 +97,16 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+
+            /* Que una base caida se note en segundos y no en horas.
+               Los aplica App\Database\PostgresConnector: libpq solo los
+               acepta en la cadena de conexion, no por variable de entorno. */
+            'connect_timeout' => env('DB_CONNECT_TIMEOUT', 5),        // seg
+            'keepalives' => env('DB_KEEPALIVES', 1),
+            'keepalives_idle' => env('DB_KEEPALIVES_IDLE', 30),       // seg
+            'keepalives_interval' => env('DB_KEEPALIVES_INTERVAL', 10), // seg
+            'keepalives_count' => env('DB_KEEPALIVES_COUNT', 3),
+            'tcp_user_timeout' => env('DB_TCP_USER_TIMEOUT', 15000),  // ms
         ],
 
         'sqlsrv' => [
