@@ -2,6 +2,10 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
         @include('partials.head')
+
+        {{-- Instalable y con pantalla propia: la app abre aunque no haya internet. --}}
+        <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+        <meta name="theme-color" content="#0e5c43">
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
         <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
@@ -168,6 +172,9 @@
         @endpersist
 
         <script src="{{ asset('js/money.js') }}"></script>
+        <script src="{{ asset('js/idempotencia.js') }}"></script>
+        <script src="{{ asset('js/numeros.js') }}"></script>
+        <script src="{{ asset('js/offline.js') }}"></script>
         @fluxScripts
     </body>
 </html>

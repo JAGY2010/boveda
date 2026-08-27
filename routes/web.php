@@ -12,16 +12,21 @@ use App\Http\Controllers\EmpenoController;
 use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LocalController;
+use App\Http\Controllers\NumeroController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\SeparadoController;
 use App\Http\Controllers\SuscripcionController;
 use App\Http\Middleware\CompartirLocales;
+use App\Http\Middleware\Idempotencia;
 use App\Http\Middleware\VerificarSuscripcion;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
 
-Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscripcion::class])->group(function () {
+// Pantalla que muestra el service worker cuando no hay copia guardada.
+Route::view('offline', 'offline')->name('offline');
+
+Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscripcion::class, Idempotencia::class])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::post('local/cambiar', [LocalController::class, 'cambiar'])->name('local.cambiar');
@@ -57,6 +62,9 @@ Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscrip
     Route::get('inventario', [InventarioController::class, 'index'])->name('inventario.index');
     Route::post('inventario/comprar', [InventarioController::class, 'comprar'])->name('inventario.comprar');
     Route::post('inventario/{item}/vender', [InventarioController::class, 'vender'])->name('inventario.vender');
+
+    // Bloques de numeros de contrato para poder crear empenos sin conexion.
+    Route::post('numeros/reservar', [NumeroController::class, 'reservar'])->name('numeros.reservar');
 
     // Separados (apartados): se abona hasta completar el precio y se entrega.
     Route::post('inventario/{item}/separar', [SeparadoController::class, 'store'])->name('separados.store');

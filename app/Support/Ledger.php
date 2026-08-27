@@ -6,6 +6,7 @@ use App\Models\Empeno;
 use App\Models\InventarioItem;
 use App\Models\Negocio;
 use App\Models\Pago;
+use App\Models\RangoNumero;
 use App\Models\Separado;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -53,7 +54,7 @@ class Ledger
             // Número dado a mano (migración de empeños viejos) o el siguiente automático.
             $numero = ! empty($data['numero'])
                 ? (int) $data['numero']
-                : max((int) ($n->empenos()->max('numero') ?? 0), (int) $n->consecutivo_inicial - 1) + 1;
+                : self::siguienteNumero($n);
             $principal = (int) $data['principal'];
 
             $empeno = $n->empenos()->create([
@@ -343,6 +344,50 @@ class Ledger
             $s->item->update(['estado' => 'disponible']);
             $s->update(['estado' => 'cancelado', 'fecha_cierre' => $fecha, 'devuelto' => $devuelto]);
         });
+    }
+
+    /**
+     * El siguiente número de contrato libre del local.
+     *
+     * Se salta los bloques apartados para trabajar sin conexión: si un
+     * dispositivo tiene reservado del 120 al 139, quien cree un empeño con
+     * internet arranca en el 140. Si no, al sincronizar chocarían.
+     */
+    public static function siguienteNumero(Negocio $n): int
+    {
+        return max(
+            (int) ($n->empenos()->max('numero') ?? 0),
+            (int) (RangoNumero::where('negocio_id', $n->id)->max('hasta') ?? 0),
+            (int) $n->consecutivo_inicial - 1,
+        ) + 1;
+    }
+
+    /**
+     * Aparta un bloque de números para un dispositivo, para que pueda crear
+     * empeños sin conexión sin repetir el número de otro equipo.
+     */
+    public static function reservarNumeros(Negocio $n, string $dispositivo, int $cuantos = 20): RangoNumero
+    {
+        // Dos dispositivos pidiendo a la vez calculan el mismo inicio; el
+        // indice unico rechaza al segundo y aqui se vuelve a intentar.
+        for ($intento = 1; ; $intento++) {
+            try {
+                return DB::transaction(function () use ($n, $dispositivo, $cuantos) {
+                    $desde = self::siguienteNumero($n);
+
+                    return RangoNumero::create([
+                        'negocio_id' => $n->id,
+                        'dispositivo' => $dispositivo,
+                        'desde' => $desde,
+                        'hasta' => $desde + $cuantos - 1,
+                    ]);
+                });
+            } catch (UniqueConstraintViolationException $e) {
+                if ($intento >= 5) {
+                    throw $e;
+                }
+            }
+        }
     }
 
     public static function registrarGasto(Negocio $n, string $cat, int $monto, ?string $desc, ?string $fecha = null): void
