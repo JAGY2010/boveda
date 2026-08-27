@@ -7,6 +7,7 @@ use App\Models\InventarioItem;
 use App\Models\Negocio;
 use App\Models\Pago;
 use App\Models\Separado;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,6 +23,31 @@ class Ledger
      * @param  array<string, mixed>  $data
      */
     public static function crearEmpeno(Negocio $n, int $clienteId, array $data): Empeno
+    {
+        /* El numero sale de "el mayor que haya + 1", asi que dos empenos
+           creados a la vez pueden pedir el mismo. La base lo rechaza (indice
+           unico) y aqui se vuelve a intentar: al empleado no le sale un error,
+           le sale su contrato.
+
+           Si el numero lo escribio una persona no se reintenta: ahi el choque
+           es un dato equivocado, no una carrera. */
+        $manual = ! empty($data['numero']);
+
+        for ($intento = 1; ; $intento++) {
+            try {
+                return self::insertarEmpeno($n, $clienteId, $data);
+            } catch (UniqueConstraintViolationException $e) {
+                if ($manual || $intento >= 5) {
+                    throw $e;
+                }
+            }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private static function insertarEmpeno(Negocio $n, int $clienteId, array $data): Empeno
     {
         return DB::transaction(function () use ($n, $clienteId, $data) {
             // Número dado a mano (migración de empeños viejos) o el siguiente automático.
