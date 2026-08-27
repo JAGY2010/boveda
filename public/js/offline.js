@@ -44,8 +44,19 @@
     }
 
     var pendientes = 0;
+    var rechazadas = 0;
+    var necesitaSesion = false;
 
     function pintar() {
+        if (necesitaSesion) {
+            mostrar('Vuelve a entrar con tu usuario: hay ' + pendientes +
+                    ' operación(es) esperando y la sesión se venció', '#b91c1c');
+            return;
+        }
+        if (rechazadas > 0) {
+            mostrar(rechazadas + ' operación(es) no se pudieron enviar · vuelve a registrarlas', '#b91c1c');
+            return;
+        }
         if (!navigator.onLine) {
             mostrar(
                 pendientes > 0
@@ -78,6 +89,8 @@
         var d = e.data || {};
         if (d.tipo === 'pendientes' || d.tipo === 'sincronizado') {
             pendientes = d.pendientes || 0;
+            rechazadas = d.rechazadas || 0;
+            necesitaSesion = !!d.necesitaSesion;
             pintar();
             // Al terminar de subir, se recarga para ver los datos de verdad.
             if (d.tipo === 'sincronizado' && d.enviadas > 0 && pendientes === 0) {
@@ -122,6 +135,14 @@
         preguntarPendientes();
         if (navigator.onLine) sincronizar();
     });
+
+    /* Reintento cada 30 s mientras quede algo por enviar.
+       Hace falta porque cuando el que se cae es el SERVIDOR (y no la red), el
+       navegador nunca dispara el evento 'online': sin esto, lo pendiente se
+       quedaria esperando a que alguien cambie de pantalla. */
+    setInterval(function () {
+        if (pendientes > 0 && navigator.onLine && !necesitaSesion) sincronizar();
+    }, 30000);
 
     document.addEventListener('DOMContentLoaded', pintar);
     pintar();

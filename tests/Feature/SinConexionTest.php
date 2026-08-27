@@ -184,6 +184,43 @@ class SinConexionTest extends TestCase
     }
 
     #[Test]
+    public function test_la_cola_no_borra_lo_que_no_llego_a_entrar(): void
+    {
+        /* El caso peligroso: la sesion caduca mientras el equipo esta sin
+           senal. Al reenviar, el servidor manda al login y fetch —que sigue
+           las redirecciones— devuelve un 200. Si la cola se fiara de ese 200
+           borraria el abono dandolo por hecho, y nadie se enteraria. */
+        $sw = (string) file_get_contents(public_path('sw.js'));
+
+        $this->assertStringContainsString('necesitaSesion', $sw);
+        $this->assertStringContainsString('419', $sw);
+        $this->assertStringContainsString("r.url.indexOf('/login')", $sw);
+
+        // Una operacion rechazada tampoco se borra en silencio.
+        $this->assertStringContainsString('op.rechazada = true', $sw);
+    }
+
+    #[Test]
+    public function test_se_reintenta_aunque_el_navegador_se_crea_conectado(): void
+    {
+        /* Si el que se cae es el SERVIDOR y no la red, el evento 'online'
+           nunca se dispara. Sin un reintento por tiempo, lo pendiente se
+           quedaria parado hasta que alguien cambie de pantalla. */
+        $offline = (string) file_get_contents(public_path('js/offline.js'));
+
+        $this->assertStringContainsString('setInterval', $offline);
+        $this->assertStringContainsString('30000', $offline);
+    }
+
+    #[Test]
+    public function test_el_servidor_rechaza_lo_reenviado_sin_sesion(): void
+    {
+        // Sin sesion, un abono reenviado no puede entrar por la puerta de atras.
+        $this->post('/separados/1/abonar', ['monto' => 50000, '_clave' => 'sin-sesion'])
+            ->assertRedirect(route('login'));
+    }
+
+    #[Test]
     public function test_solo_se_reserva_dentro_del_local_propio(): void
     {
         $rango = Ledger::reservarNumeros($this->negocio, 'tablet-1', 5);

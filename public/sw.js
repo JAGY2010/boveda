@@ -72,10 +72,12 @@ function conTienda(modo, fn) {
 const encolar = (op) => conTienda('readwrite', (t) => t.add(op));
 const listarPendientes = () => conTienda('readonly', (t) => t.getAll());
 const borrarPendiente = (id) => conTienda('readwrite', (t) => t.delete(id));
+const guardarPendiente = (op) => conTienda('readwrite', (t) => t.put(op));
 
 async function contarPendientes() {
     try {
-        return (await listarPendientes()).length;
+        // Las rechazadas ya no van a salir solas: no cuentan como "en camino".
+        return (await listarPendientes()).filter((o) => !o.rechazada).length;
     } catch (e) {
         return 0;
     }
@@ -87,11 +89,11 @@ async function avisarAPaginas(mensaje) {
 }
 
 /**
- * Vacia la cola. Se llama al volver el internet.
+ * Vacia la cola. Se llama al volver la senal y cada cierto tiempo mientras
+ * quede algo pendiente.
  *
- * Un fallo de red deja la operacion en la cola para el proximo intento. Una
- * respuesta del servidor —aunque sea un error— significa que llego, y se
- * saca: reintentarla solo la volveria a rechazar.
+ * Lo delicado aqui es cuando NO hay que borrar una operacion. Borrarla de mas
+ * es perder plata en silencio: nadie se entera de que ese abono nunca entro.
  */
 async function enviarPendientes() {
     let pendientes = [];
@@ -102,26 +104,62 @@ async function enviarPendientes() {
     }
 
     let enviadas = 0;
+    let rechazadas = 0;
+    let necesitaSesion = false;
 
     for (const op of pendientes) {
+        if (op.rechazada) { rechazadas++; continue; }
+
+        let r;
         try {
-            const r = await fetch(op.url, {
+            r = await fetch(op.url, {
                 method: 'POST',
                 headers: { 'Content-Type': op.tipo || 'application/x-www-form-urlencoded' },
                 body: op.cuerpo,
                 credentials: 'same-origin',
                 redirect: 'follow',
             });
-            if (r.status >= 500) continue; // el servidor esta mal: se reintenta luego
-            await borrarPendiente(op.id);
-            enviadas++;
         } catch (e) {
-            break; // sigue sin haber red
+            break; // sigue sin haber red: se reintenta en la proxima
         }
+
+        /* La sesion se cayo (caduco mientras estaba sin senal, o el token CSRF
+           ya no vale). El servidor manda al login y fetch, que sigue las
+           redirecciones, devuelve un 200 tranquilizador. Si aqui se borrara,
+           el abono desapareceria sin dejar rastro. Se para todo y se avisa. */
+        if (r.status === 419 || r.status === 401 || (r.redirected && r.url.indexOf('/login') !== -1)) {
+            necesitaSesion = true;
+            break;
+        }
+
+        if (r.status >= 500) {
+            // El servidor esta mal, no la operacion: se deja para luego.
+            continue;
+        }
+
+        if (r.status >= 400) {
+            /* El servidor la rechazo. Reintentarla solo la volveria a
+               rechazar, pero tampoco se puede borrar como si hubiera entrado:
+               se marca para que el empleado la revise. */
+            op.rechazada = true;
+            op.motivo = 'El servidor la rechazó (' + r.status + ')';
+            try { await guardarPendiente(op); } catch (e) { /* no se pudo marcar */ }
+            rechazadas++;
+            continue;
+        }
+
+        await borrarPendiente(op.id);
+        enviadas++;
     }
 
     const quedan = await contarPendientes();
-    await avisarAPaginas({ tipo: 'sincronizado', enviadas: enviadas, pendientes: quedan });
+    await avisarAPaginas({
+        tipo: 'sincronizado',
+        enviadas: enviadas,
+        rechazadas: rechazadas,
+        necesitaSesion: necesitaSesion,
+        pendientes: quedan,
+    });
 }
 
 self.addEventListener('sync', (event) => {
