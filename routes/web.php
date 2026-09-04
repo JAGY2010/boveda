@@ -21,7 +21,15 @@ use App\Http\Middleware\Idempotencia;
 use App\Http\Middleware\VerificarSuscripcion;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
+/*
+ * La raiz manda al tablero a quien ya trabaja aqui. Al visitante sin sesion
+ * le muestra la bienvenida, que explica que es Boveda: antes rebotaba al
+ * formulario de entrada y se iba sin enterarse de que se trata. /login queda
+ * igual para quien lo tenga guardado.
+ */
+Route::get('/', fn () => auth()->check()
+    ? redirect()->route('dashboard')
+    : view('bienvenida'))->name('home');
 
 // Pantalla que muestra el service worker cuando no hay copia guardada.
 Route::view('offline', 'offline')->name('offline');
