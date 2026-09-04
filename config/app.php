@@ -94,7 +94,12 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    /*
+     * Español por defecto: a Bóveda la usan compraventas en Colombia. Las
+     * cadenas traducidas viven en lang/es.json; la que no esté ahí cae al
+     * inglés original, así que agregar el archivo no rompe ninguna pantalla.
+     */
+    'locale' => env('APP_LOCALE', 'es'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
