@@ -161,7 +161,18 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        /*
+         * Registro publico DESACTIVADO a proposito.
+         *
+         * Boveda es un SaaS por suscripcion: el administrador da de alta cada
+         * local y el dueño crea a sus empleados. Nadie se registra solo. Con
+         * la ruta abierta, cualquiera en internet podia crear una cuenta en un
+         * sistema que maneja empeños.
+         *
+         * Al quitar esta linea desaparecen las rutas /register. Por eso el
+         * enlace "Cree una" del login va envuelto en Route::has('register').
+         */
+        // Features::registration(),
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

@@ -51,9 +51,18 @@
             </div>
         </form>
 
-        <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
-            <span>{{ __('Don\'t have an account?') }}</span>
-            <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
-        </div>
+        {{-- El registro publico esta desactivado (ver config/fortify.php): en
+             Boveda las cuentas las crea el administrador, nadie se registra
+             solo. Si algun dia se reactiva, el enlace vuelve a aparecer. --}}
+        @if (Route::has('register'))
+            <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
+                <span>{{ __('Don\'t have an account?') }}</span>
+                <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
+            </div>
+        @else
+            <p class="text-sm text-center text-zinc-500 dark:text-zinc-400">
+                Las cuentas las crea el administrador del sistema.
+            </p>
+        @endif
     </div>
 </x-layouts::auth>
