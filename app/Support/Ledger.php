@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Arreglo;
 use App\Models\Empeno;
 use App\Models\InventarioItem;
 use App\Models\Negocio;
@@ -388,6 +389,50 @@ class Ledger
                 }
             }
         }
+    }
+
+    /**
+     * Un arreglo a un artículo del inventario (la llanta de la moto). Sale de
+     * caja, pero no es gasto: queda invertido en el artículo y sube su costo.
+     * El total invertido no cambia; la plata pasó de la caja a la moto.
+     */
+    public static function agregarArreglo(InventarioItem $it, string $desc, int $monto, ?string $fecha = null): Arreglo
+    {
+        return DB::transaction(function () use ($it, $desc, $monto, $fecha) {
+            $fecha = $fecha ?: hoyLocal();
+            $n = $it->negocio;
+
+            $arreglo = $it->arreglos()->create([
+                'negocio_id' => $n->id,
+                'descripcion' => $desc,
+                'monto' => $monto,
+                'fecha' => $fecha,
+            ]);
+
+            $it->increment('costo', $monto);
+            $n->decrement('caja', $monto);
+            $n->increment('inventario_valor', $monto);
+            self::mov($n, "Arreglo {$it->descripcion}: {$desc}", -$monto, $fecha);
+
+            return $arreglo;
+        });
+    }
+
+    /** Deshacer un arreglo anotado por error: la plata vuelve a caja. */
+    public static function quitarArreglo(Arreglo $a): void
+    {
+        DB::transaction(function () use ($a) {
+            $it = $a->item;
+            $n = $it->negocio;
+            $monto = (int) $a->monto;
+
+            $it->decrement('costo', $monto);
+            $n->increment('caja', $monto);
+            $n->decrement('inventario_valor', $monto);
+            self::mov($n, "Reversa arreglo {$it->descripcion}: {$a->descripcion}", $monto);
+
+            $a->delete();
+        });
     }
 
     public static function registrarGasto(Negocio $n, string $cat, int $monto, ?string $desc, ?string $fecha = null): void

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -9,10 +10,16 @@ class ExampleTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_la_raiz_lleva_al_tablero(): void
+    public function test_sin_sesion_la_raiz_muestra_la_bienvenida(): void
     {
-        // La página de inicio no muestra contenido propio: envía al tablero
-        // (y de ahí, si no hay sesión, al login).
-        $this->get(route('home'))->assertRedirect(route('dashboard'));
+        // Quien llega sin sesión ve qué es Bóveda en vez de rebotar al login.
+        $this->get(route('home'))->assertOk()->assertViewIs('bienvenida');
+    }
+
+    public function test_con_sesion_la_raiz_lleva_al_tablero(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get(route('home'))
+            ->assertRedirect(route('dashboard'));
     }
 }

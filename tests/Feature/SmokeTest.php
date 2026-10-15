@@ -36,7 +36,8 @@ class SmokeTest extends TestCase
     public function test_paginas_de_invitado_cargan(): void
     {
         $this->get('/login')->assertOk();
-        $this->get('/register')->assertOk();
+        // El registro público se cerró: las cuentas las crea el administrador.
+        $this->get('/register')->assertNotFound();
     }
 
     public function test_todas_las_pantallas_cargan(): void

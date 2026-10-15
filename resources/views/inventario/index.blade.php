@@ -45,7 +45,25 @@
                                 <div class="text-xs text-zinc-400">{{ $it->origen === 'perdido' ? 'No retirado · empeño #' . optional($it->empeno)->numero : 'Compra directa' }}</div>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-zinc-500">{{ optional($it->fecha_compra)->format('d/m/Y') ?: '—' }}</td>
-                            <td class="px-4 py-3 text-right tabular-nums">{{ cop($it->costo) }}</td>
+                            <td class="px-4 py-3 text-right tabular-nums">
+                                <div class="font-semibold">{{ cop($it->costo) }}</div>
+                                @if ($it->arreglos->count())
+                                    <div class="text-xs text-zinc-400">compra {{ cop($it->costoOriginal()) }} + arreglos {{ cop($it->totalArreglos()) }}</div>
+                                    @foreach ($it->arreglos as $ar)
+                                        <div class="flex items-center justify-end gap-1 text-xs text-zinc-500">
+                                            <span>{{ $ar->descripcion }} · {{ cop($ar->monto) }}</span>
+                                            @if (auth()->user()->puedeEditar())
+                                                <form method="POST" action="{{ route('arreglos.quitar', $ar) }}"
+                                                      onsubmit="return confirm('¿Quitar este arreglo? La plata vuelve a caja.')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" title="Quitar (anotado por error)" class="px-1 font-bold text-red-500 hover:text-red-400">×</button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </td>
                             <td class="px-4 py-3">
                                 <form method="POST" action="{{ route('inventario.vender', $it) }}" class="flex flex-wrap items-center justify-end gap-2">
                                     @csrf
@@ -56,6 +74,9 @@
                                 <div class="mt-1 text-right">
                                     <button type="button" onclick="abrirSeparar({{ $it->id }}, @js($it->descripcion), {{ (int) $it->costo }})"
                                             class="text-xs font-semibold text-amber-600 hover:text-amber-500 dark:text-amber-500">+ Separar para un cliente</button>
+                                    <span class="text-xs text-zinc-300">·</span>
+                                    <button type="button" onclick="abrirArreglo({{ $it->id }}, @js($it->descripcion), {{ (int) $it->costo }})"
+                                            class="text-xs font-semibold text-sky-600 hover:text-sky-500 dark:text-sky-400">+ Arreglo</button>
                                 </div>
                             </td>
                         </tr>
@@ -124,7 +145,12 @@
                             <td class="px-4 py-3 font-semibold text-zinc-900 dark:text-white">{{ $it->descripcion }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-zinc-500">{{ optional($it->fecha_compra)->format('d/m/Y') ?: '—' }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-zinc-500">{{ optional($it->fecha_venta)->format('d/m/Y') ?: '—' }}</td>
-                            <td class="px-4 py-3 text-right tabular-nums">{{ cop($it->costo) }}</td>
+                            <td class="px-4 py-3 text-right tabular-nums">
+                                {{ cop($it->costo) }}
+                                @if ($it->arreglos->count())
+                                    <div class="text-xs text-zinc-400">incl. arreglos {{ cop($it->totalArreglos()) }}</div>
+                                @endif
+                            </td>
                             <td class="px-4 py-3 text-right tabular-nums">{{ cop($it->venta) }}</td>
                             <td class="px-4 py-3 text-right font-semibold tabular-nums {{ $it->venta - $it->costo >= 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ cop($it->venta - $it->costo) }}</td>
                         </tr>
@@ -194,6 +220,37 @@
         </div>
     </div>
 
+    {{-- Arreglo: lo invertido en el articulo suma a su costo, no a los gastos --}}
+    <div id="arrModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+        <div class="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+            <h2 class="mb-1 text-lg font-semibold text-zinc-900 dark:text-white">Agregar arreglo</h2>
+            <p id="arrArt" class="mb-1 text-sm text-zinc-500"></p>
+            <p class="mb-4 text-xs text-zinc-400">Sale de la caja y se suma al costo del artículo. No va a gastos: la ganancia se calcula al venderlo.</p>
+
+            <form method="POST" id="arrForm" class="space-y-3">
+                @csrf
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-zinc-500">Qué se le hizo</label>
+                    <input name="descripcion" id="arr_desc" required placeholder="Ej: Llanta trasera" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-zinc-500">Valor</label>
+                        <input type="text" inputmode="numeric" name="monto" required placeholder="100.000" class="money w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-zinc-500">Fecha</label>
+                        <input type="date" name="fecha" value="{{ now()->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-white" />
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-1">
+                    <button type="button" onclick="cerrarArreglo()" class="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-600 dark:border-zinc-600 dark:text-zinc-200">Cancelar</button>
+                    <button type="submit" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500">Agregar al costo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         function sepCli(cual) {
             const ex = document.getElementById('sep_ex');
@@ -220,6 +277,22 @@
             m.classList.remove('hidden');
             m.classList.add('flex');
             sepCli(@js($clientes->count()) ? 'ex' : 'nu');
+        }
+
+        function abrirArreglo(id, descripcion, costo) {
+            const m = document.getElementById('arrModal');
+            document.getElementById('arrForm').action = '{{ url('inventario') }}/' + id + '/arreglo';
+            document.getElementById('arrArt').textContent = descripcion + ' · cuesta hoy ' +
+                new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(costo);
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            document.getElementById('arr_desc').focus();
+        }
+
+        function cerrarArreglo() {
+            const m = document.getElementById('arrModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
         }
 
         function cerrarSeparar() {

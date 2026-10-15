@@ -70,6 +70,9 @@ Route::middleware(['auth', 'verified', CompartirLocales::class, VerificarSuscrip
     Route::get('inventario', [InventarioController::class, 'index'])->name('inventario.index');
     Route::post('inventario/comprar', [InventarioController::class, 'comprar'])->name('inventario.comprar');
     Route::post('inventario/{item}/vender', [InventarioController::class, 'vender'])->name('inventario.vender');
+    // Arreglos: lo invertido en un articulo suma a su costo, no a gastos.
+    Route::post('inventario/{item}/arreglo', [InventarioController::class, 'arreglo'])->name('inventario.arreglo');
+    Route::delete('arreglos/{arreglo}', [InventarioController::class, 'quitarArreglo'])->name('arreglos.quitar');
 
     // Bloques de numeros de contrato para poder crear empenos sin conexion.
     Route::post('numeros/reservar', [NumeroController::class, 'reservar'])->name('numeros.reservar');
