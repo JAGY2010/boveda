@@ -105,7 +105,7 @@
         </div>
         <p class="text-sm text-zinc-500">
             Desarrollado por
-            <a href="https://gaviriapp.dev" target="_blank" rel="noopener noreferrer"
+            <a href="https://gaviriapp.dev/" target="_blank" rel="noopener noreferrer"
                class="font-bold text-emerald-400 hover:underline">Julián Gaviria</a>
         </p>
     </footer>

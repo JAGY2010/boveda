@@ -16,6 +16,11 @@
                     {{ $slot }}
                 </div>
             </div>
+            <p class="text-center text-sm text-zinc-500">
+                Desarrollado por
+                <a href="https://gaviriapp.dev/" target="_blank" rel="noopener noreferrer"
+                   class="font-bold text-emerald-500 hover:underline">Julian Gaviria</a>
+            </p>
         </div>
 
         @persist('toast')
